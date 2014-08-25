@@ -18,10 +18,10 @@
  */
 function logStatus(status)
 {
-    var parentElement = document.getElementById('hrm');
+    /*var parentElement = document.getElementById('hrm');
         var listeningElement = parentElement.querySelector('.listening');
 
-        listeningElement.innerHTML+=status+'<br/>';
+        listeningElement.innerHTML+=status+'<br/>';*/
     console.log(status);
 }
 

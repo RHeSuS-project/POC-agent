@@ -17,7 +17,7 @@
  * under the License.
  */
 var app = {
-    plugins: new Array('ble', 'ant'),
+    plugins: new Array('ble'/*, 'ant'*/),
     // Application Constructor
     initialize: function() {
         //app.plugins=new Array('ble', 'ant');
@@ -42,9 +42,9 @@ var app = {
     receivedEvent: function(id) {
         for(var i=0;app.plugins.lenght>i;i++)
         {
-            app.plugins[i];
+            loadPlugin(app.plugins[i]);
         }
-        
+        app.scanStart();
         var parentElement = document.getElementById(id);
         var listeningElement = parentElement.querySelector('.listening');
         var receivedElement = parentElement.querySelector('.received');
@@ -53,5 +53,27 @@ var app = {
         receivedElement.setAttribute('style', 'display:block;');
 
         console.log('Received Event: ' + id);
+    },
+    scanStart: function() {
+        for(var i=0;app.plugins.lenght>i;i++)
+        {
+            window[app.plugins[i]].scanStart();
+        }
+    },
+    scanResult: function() {
+        var result=new Array();
+        var k=0;
+        for(var i=0;app.plugins.lenght>i;i++)
+        {
+            for(var j=0;window[app.plugins[i]].scanResult.lenght;j++)
+            {
+                result[k]=new Array(
+                        app.plugins[i],
+                        window[app.plugins[i]].scanResult[j]
+                    );
+                k++;
+            }
+        }
+        return result;
     }
 };
