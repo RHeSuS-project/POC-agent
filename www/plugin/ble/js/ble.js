@@ -213,16 +213,16 @@ var ble = {
           bluetoothle.discover(ble.discoverSuccess, ble.discoverError);
         }
     },
-    servicesHeartSuccess: function() {
+    servicesHeartSuccess: function(obj) {
         
     },
-    servicesHeartError: function() {
+    servicesHeartError: function(obj) {
         
     },
-    discoverSuccess: function() {
+    discoverSuccess: function(obj) {
         
     },
-    discoverError: function() {
+    discoverError: function(obj) {
         
     }
 };
