@@ -16,64 +16,55 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-var app = {
-    plugins: new Array('ble'/*, 'ant'*/),
-    // Application Constructor
-    initialize: function() {
-        //app.plugins=new Array('ble', 'ant');
-        this.bindEvents();
-        
-    },
-    // Bind Event Listeners
-    //
-    // Bind any events that are required on startup. Common events are:
-    // 'load', 'deviceready', 'offline', and 'online'.
-    bindEvents: function() {
-        document.addEventListener('deviceready', this.onDeviceReady, false);
-    },
-    // deviceready Event Handler
-    //
-    // The scope of 'this' is the event. In order to call the 'receivedEvent'
-    // function, we must explicitly call 'app.receivedEvent(...);'
-    onDeviceReady: function() {
-        app.receivedEvent('deviceready');
-    },
-    // Update DOM on a Received Event
-    receivedEvent: function(id) {
-        for(var i=0;app.plugins.lenght>i;i++)
-        {
-            loadPlugin(app.plugins[i]);
-        }
-        app.scanStart();
-        var parentElement = document.getElementById(id);
+function logStatus(status)
+{
+    /*var parentElement = document.getElementById('hrm');
         var listeningElement = parentElement.querySelector('.listening');
-        var receivedElement = parentElement.querySelector('.received');
 
-        listeningElement.setAttribute('style', 'display:none;');
-        receivedElement.setAttribute('style', 'display:block;');
+        listeningElement.innerHTML+=status+'<br/>';*/
+    console.log(status);
+}
 
-        console.log('Received Event: ' + id);
-    },
-    scanStart: function() {
-        for(var i=0;app.plugins.lenght>i;i++)
-        {
-            window[app.plugins[i]].scanStart();
-        }
-    },
-    scanResult: function() {
-        var result=new Array();
-        var k=0;
-        for(var i=0;app.plugins.lenght>i;i++)
-        {
-            for(var j=0;window[app.plugins[i]].scanResult.lenght;j++)
-            {
-                result[k]=new Array(
-                        app.plugins[i],
-                        window[app.plugins[i]].scanResult[j]
-                    );
-                k++;
+function dump(obj) {
+    logStatus(JSON.parse(JSON.stringify(obj)));
+}
+
+function loadPlugin(name){
+    var script = document.createElement("script")
+    script.type = "text/javascript";
+    script.src = 'plugin/'+name+'/js/'+name+'.js';
+    if (script.readyState){  //IE
+        script.onreadystatechange = function(){
+            if (script.readyState == "loaded" ||
+                    script.readyState == "complete"){
+                script.onreadystatechange = null;
+                logStatus('plugin '+name+' loaded');
+                eval(name+'.construct()');
             }
-        }
-        return result;
+        };
+    } else {  //Others
+        script.onload = function(){
+            logStatus('plugin '+name+' loaded');
+            eval(name+'.construct()');
+        };
     }
-};
+
+    document.getElementsByTagName("head")[0].appendChild(script);
+}
+
+/**
+ * This function is called when scan results are received.
+ * You can use it to, perhaps display something, or call another function
+ */
+function onScanResult(){
+    //temporarily, we set the innerHTML of the element with id scanResult
+    document.getElementById('ScanResults').innerHTML='<ul>';
+    var i=0;
+    var results=app.scanResult();
+    //logStatus("size:"+results.length);
+    for(i=0;results.length>i;i++)
+    {
+        document.getElementById('ScanResults').innerHTML+='<li><a onclick="app.connectToDevice(\''+results[i].type+'\',\''+results[i].device.address+'\')">'+results[i].device.name+" - "+results[i].device.address+"</a></li>";
+    }
+    document.getElementById('ScanResults').innerHTML+='</ul>';
+}

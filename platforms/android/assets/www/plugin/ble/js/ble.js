@@ -24,60 +24,89 @@
  * @author Philip Verbist <philip@xsonline.eu>
  * @type object
  */
+
 var ble = {
     initialized:null,
-    startScanErrorMessage:null,
-    startscanRunning:false,
+    scanStartErrorMessage:null,
+    scanStartRunning:false,
     scanResult:new Array(),
-    connectedDevices:new Array(),
+    connectedDevices:null,
+    connectTimer:null,
     scanTimer:null,
     // plugin Constructor
     construct: function() {
-        //ble.scanResult=array();
-        ble.connectedDevices=window.localStorage.getItem(bleConnectedDevices);
+        logStatus('BLE: constructed');
+        ble.connectedDevices=window.localStorage.getItem(ble.ConnectedDevices);
         if(ble.connectedDevices===null)
-            ble.connectedDevices=array();
+            ble.connectedDevices=new Array();
         
     },
-    initialize: function(callbackSucces,callbackError ){
-        if(callbackSucces===undefined)
-            callbackSucces=ble.initializeSuccess;
-        if(callbackError===undefined)
-            callbackError=ble.initializeError;
-        if(ble.initialized===null)
-            bluetoothle.initialize(callbackSucces, callbackError);
-        return ble.initialized;
+    initialize: function(initCallbackSucces,initCallbackError){
+        logStatus('BLE: Initializing');
+        
+        //logStatus(initCallbackSucces);
+        if(initCallbackSucces===undefined)
+            initCallbackSucces=ble.initializeSuccess;
+        if(initCallbackError===undefined)
+            initCallbackError=ble.initializeError;
+        if(!ble.initialized)
+            bluetoothle.initialize(initCallbackSucces, initCallbackError);
     },
     initializeSuccess: function(obj) {
         ble.initialized=true;
+        logStatus('BLE: initialization success');
     },
     initializeError: function(obj) {
         ble.initialized=false;
         logStatus('BLE: initialization failed');
     },
-    startScan: function(obj) {
-        if(!ble.startscanRunning)
+    isInitialized: function(isInitCallbackSucces, isInitCallbackError)
+    {
+        if(isInitCallbackSucces===undefined)
+            isInitCallbackSucces=ble.initCallbackSucces;
+        if(isInitCallbackError===undefined)
+            isInitCallbackError=ble.initCallbackError;
+        bluetoothle.isInitialized(isInitCallbackSucces, isInitCallbackError);
+    },
+    isInitCallbackSucces: function() {
+        
+    },
+    isInitCallbackError: function() {
+        
+    },
+    scanStart: function(obj) {
+        if(!ble.scanStartRunning)
         {
+            logStatus('BLE: trying to start scan');
             var sw=false;
-            if(ble.initialized && ble.startScanErrorMessage===null)
+            if(ble.initialized && ble.scanStartErrorMessage===null)
                 sw=true;
             else
-                ble.initialize(ble.startScan);
+            {
+                ble.initialize(ble.initializeSuccessScanStart);
+            }
             if(sw)
             {
-                var paramsObj = {};
-                bluetoothle.startScan(ble.startScanSuccess, ble.startScanError, paramsObj);
-                ble.startscanRunning=true;
+                var paramsObj = new Object();
+                bluetoothle.startScan(ble.scanStartSuccess, ble.scanStartError, paramsObj);
+                ble.scanStartRunning=true;
+                logStatus('BLE: Scan stared');
             }
         }
     },
-    startScanSuccess: function(obj) {
+    initializeSuccessScanStart: function(obj) {
+        ble.initializeSuccess(obj);
+        ble.scanStart();
+    },
+    scanStartSuccess: function(obj) {
         if (obj.status == "scanResult")
         {
+            console.log(obj.toLocaleString());
             logStatus("BLE: Result found: "+obj.name+' - '+obj.address);
-            //clearScanTimeout();
-            ble.scanResult[ble.scanresult.length]={name:obj.name,address:obj.address};
-            
+            //scanClearTimeout();
+            ble.scanResult[ble.scanResult.length]=obj;
+            logStatus('size:'+ble.scanResult.length);
+            app.onScanResult();
             //window.localStorage.setItem(addressKey, obj.address);
             //connectDevice(obj.address);
         }
@@ -86,30 +115,33 @@ var ble = {
             ble.scanResult=new Array();
             logStatus("BLE: Scan was started successfully, stopping in 10");
             ble.scanTimer = setTimeout(ble.scanTimeout, 10000);
-            ble.startscanRunning=true;
+            ble.scanStartRunning=true;
         }
         else
         {
             logStatus("BLE: Unexpected start scan status: " + obj.status);
-            ble.startscanRunning=false;
+            ble.scanStartRunning=false;
         }
     },
-    startScanError: function(obj) {
-        ble.startScanErrorMessage="Start scan error: " + obj.error + " - " + obj.message;
-        logStatus(ble.startScanErrorMessage);
-        ble.startscanRunning=false;
+    scanStartError: function(obj) {
+        ble.scanStartErrorMessage="Start scan error: " + obj.error + " - " + obj.message;
+        logStatus(ble.scanStartErrorMessage);
+        ble.scanStartRunning=false;
     },
     scanTimeout: function() {
         logStatus("BLE: Scanning time out, stopping");
-        ble.stopScan();
+        ble.scanStop();
     },
-    stopScan: function() {
-        bluetoothle.stopScan(stopScanSuccess, stopScanError);
-        ble.clearScanTimeout();
-        ble.startscanRunning=false;
+    scanStop: function() {
+        if(ble.scanStartRunning)
+        {    
+            bluetoothle.stopScan(ble.scanStopSuccess, ble.scanStopError);
+            ble.scanClearTimeout();
+        }
+        ble.scanStartRunning=false;
         
     },
-    stopScanSuccess: function() {
+    scanStopSuccess: function(obj) {
         if (obj.status == "scanStopped")
         {
           logStatus("BLE: Scan was stopped successfully");
@@ -119,13 +151,53 @@ var ble = {
           logStatus("BLE: Unexpected stop scan status: " + obj.status);
         }
     },
-    stopScanError: function() {
+    scanStopError: function(obj) {
         logStatus("BLE: Stop scan error: " + obj.error + " - " + obj.message);
     },
-    clearScanTimeout: function()
+    scanClearTimeout: function()
     { 
         logStatus("BLE: Clearing scanning timeout");
         if (ble.scanTimer != null)
             clearTimeout(ble.scanTimer);
+    },
+    connectDevice: function(address) {
+        logStatus("BLE: Begining connection to: " + address + " with 5 second timeout");
+        var paramsObj = {"address":address};
+        bluetoothle.connect(ble.connectDeviceSucces, ble.connectDeviceError, paramsObj);
+        connectTimer = setTimeout(ble.connectTimeout, 5000);
+    },
+    connectDeviceSucces: function(obj) {
+        if (obj.status == "connected")
+        {
+          logStatus("Connected to : " + obj.name + " - " + obj.address);
+
+          ble.clearConnectTimeout();
+
+
+          //tempDisconnectDevice();
+        }
+        else if (obj.status == "connecting")
+        {
+          logStatus("Connecting to : " + obj.name + " - " + obj.address);
+        }
+        else
+        {
+          logStatus("Unexpected connect status: " + obj.status);
+          ble.clearConnectTimeout();
+        }
+    },
+    connectDeviceError: function(obj) {
+        logStatus("Connect error: " + obj.error + " - " + obj.message);
+        ble.clearConnectTimeout();
+    },
+    connectTimeout: function() {
+        logStatus("Connection timed out");
+    },
+    clearConnectTimeout: function() {
+         logStatus("Clearing connect timeout");
+         if (ble.connectTimer != null)
+         {
+              clearTimeout(ble.connectTimer);
+        }
     }
 };
