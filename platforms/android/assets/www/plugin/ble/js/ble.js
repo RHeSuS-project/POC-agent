@@ -169,35 +169,158 @@ var ble = {
     connectDeviceSucces: function(obj) {
         if (obj.status == "connected")
         {
-          logStatus("Connected to : " + obj.name + " - " + obj.address);
+          logStatus("BLE: Connected to : " + obj.name + " - " + obj.address);
 
           ble.clearConnectTimeout();
 
-
+            ble.discover();
           //tempDisconnectDevice();
         }
         else if (obj.status == "connecting")
         {
-          logStatus("Connecting to : " + obj.name + " - " + obj.address);
+          logStatus("BLE: Connecting to : " + obj.name + " - " + obj.address);
         }
         else
         {
-          logStatus("Unexpected connect status: " + obj.status);
+          logStatus("BLE: Unexpected connect status: " + obj.status);
           ble.clearConnectTimeout();
         }
     },
     connectDeviceError: function(obj) {
-        logStatus("Connect error: " + obj.error + " - " + obj.message);
+        logStatus("BLE: connect error: " + obj.error + " - " + obj.message);
         ble.clearConnectTimeout();
     },
     connectTimeout: function() {
-        logStatus("Connection timed out");
+        logStatus("BLE: Connection timed out");
     },
     clearConnectTimeout: function() {
-         logStatus("Clearing connect timeout");
+         logStatus("BLE: Clearing connect timeout");
          if (ble.connectTimer != null)
          {
               clearTimeout(ble.connectTimer);
         }
+    },
+    discover: function() {
+        if (window.device.platform == iOSPlatform)
+        {
+          logStatus("BLE: Discovering heart rate service");
+          var paramsObj = {"serviceUuids":[heartRateServiceUuid]};
+          bluetoothle.services(ble.servicesHeartSuccess, ble.servicesHeartError, paramsObj);
+        }
+        else if (window.device.platform == androidPlatform)
+        {
+          logStatus("BLE: Beginning discovery");
+          bluetoothle.discover(ble.discoverSuccess, ble.discoverError);
+        }
+    },
+    servicesHeartSuccess: function(obj) {
+        
+    },
+    servicesHeartError: function(obj) {
+        
+    },
+    discoverSuccess: function(obj) {
+        if (obj.status == "discovered")
+        {
+            logStatus("BLE: Discovery completed");
+            var i = 0;
+            for(i=0;obj.services.length>i;i++)
+            {
+                /*for(key in obj.services[i].characteristics[0].descriptors)
+                     logStatus("BLE: chasteristics: 0: descriptors: "+key+": "+obj.services[i].characteristics.descriptors[0][key]);*/
+                var serviceUuid=obj.services[i].serviceUuid;
+                ble.charasteristics({serviceUuid:serviceUuid,charasteristicsUuids:obj.services[i].characteristics});
+                logStatus('BLE: serviceUuid: '+obj.services[i].serviceUuid);
+                /*for(key3 in obj.services[i].characteristics)
+                    for(key2 in obj.services[i].characteristics[key3])
+                    {
+                        if(key2=='descriptors')
+                        {
+                            for(key4 in obj.services[i].characteristics[key3][key2])
+                            {
+                                for(key5 in obj.services[i].characteristics[key3][key2][key4])
+                                {
+                                    logStatus("BLE: chasteristics: "+key3+": "+key2+': '+key4+': '+key5+": "+obj.services[i].characteristics[key3][key2][key4][key5]);
+                                }
+                            }
+                        }
+                        else
+                        {
+                            logStatus("BLE: chasteristics: "+key3+": "+key2+': '+obj.services[i].characteristics[key3][key2]);
+                            if(key2=='characteristicUuid')
+                                ble.charasteristics({serviceUuid:serviceUuid,charasteristicsUuids:obj.services[i].characteristics[key3][key2]});
+                        }
+                    }
+             */   
+            }
+            //bluetoothle.descriptors(ble.descriptorsSuccess, ble.descriptorsError);
+        }
+        else
+        {
+            logStatus("BLE: Unexpected discover status: " + obj.status);
+            ble.disconnectDevice();
+        }
+    },
+    discoverError: function(obj) {
+        
+    },
+    disconnectDevice: function() {
+        
+    },
+    /*descriptorsSuccess: function(obj) {
+        for(key in obj)
+            logStatus(key+":"+obj[key]);
+    },*/
+    descriptorsError: function(obj) {
+        logStatus('BLE: descriptors failed');
+    },
+    charasteristics: function(obj, callBackSuccess, callBackError) {
+        bluetoothle.characteristics(ble.characteristicsSuccess, ble.characteristicsError, obj);
+    },
+    characteristicsSuccess: function(obj) {
+        if (obj.status == "discoveredCharacteristics")
+        {
+          var characteristicUuids = obj.characteristicUuids;
+          for (var i = 0; i < characteristicUuids.length; i++)
+          {
+            logStatus("Characteristics found, now discovering descriptor");
+            var characteristicUuid = characteristicUuids[i];
+
+            //if (characteristicUuid == heartRateMeasurementCharacteristicUuid)
+            //{
+              var paramsObj = {"serviceUuid":obj.serviceUuid, "characteristicUuid":characteristicUuid};
+              ble.descriptors(paramsObj);
+              return;
+            //}
+          }
+          logStatus("Error: Heart rate measurement characteristic not found.");
+        }
+          else
+        {
+          logStatus("Unexpected characteristics heart status: " + obj.status);
+        }
+        //disconnectDevice();
+    },
+    characteristicsError: function() {
+        
+    },
+    descriptors: function(obj) {
+        bluetoothle.descriptors(ble.descriptorsSuccess, ble.descriptorsHeartError, obj);
+    },
+    descriptorsSuccess: function(obj) {
+        if (obj.status == "discoveredDescriptors")
+        {
+          logStatus("Discovered heart descriptors, now discovering battery service");
+          var paramsObj = {"serviceUuids":[batteryServiceUuid]};
+          //bluetoothle.services(servicesBatterySuccess, servicesBatteryError, paramsObj);
+        }
+        else
+        {
+          logStatus("Unexpected descriptors heart status: " + obj.status);
+          disconnectDevice();
+        }
+    },
+    descriptorsHeartError: function() {
+        
     }
 };

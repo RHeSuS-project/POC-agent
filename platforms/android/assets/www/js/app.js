@@ -16,6 +16,8 @@
  * specific language governing permissions and limitations
  * under the License.
  */
+var iOSPlatform = "iOS";
+var androidPlatform = "Android";
 var app = {
     plugins: new Array('ble'/*, 'ant'*/),
     // Application Constructor
