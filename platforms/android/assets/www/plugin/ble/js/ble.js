@@ -33,6 +33,7 @@ var ble = {
     connectedDevices:null,
     connectTimer:null,
     scanTimer:null,
+    unsubscribeDevice:5000,
     // plugin Constructor
     construct: function() {
         logStatus('BLE: constructed');
@@ -229,7 +230,22 @@ var ble = {
                 /*for(key in obj.services[i].characteristics[0].descriptors)
                      logStatus("BLE: chasteristics: 0: descriptors: "+key+": "+obj.services[i].characteristics.descriptors[0][key]);*/
                 var serviceUuid=obj.services[i].serviceUuid;
-                ble.charasteristics({serviceUuid:serviceUuid,charasteristicsUuids:obj.services[i].characteristics});
+                var charasteristicsUuids = new Array();
+                var u=0;
+                var v=0;
+                for(u=0;obj.services[i].characteristics.length>u;u++)
+                {
+                    if(obj.services[i].characteristics[u].characteristicUuid!==undefined)
+                    {
+                        logStatus(obj.services[i].characteristics[u].characteristicUuid);
+                        charasteristicsUuids[v]=obj.services[i].characteristics[u].characteristicUuid;
+                        //ble.charasteristics({serviceUuid:serviceUuid,charasteristicsUuids:[obj.services[i].characteristics[u].characteristicUuid]});
+                        bluetoothle.subscribe(ble.subscribeSuccess, ble.subscribeError, {"serviceUuid":serviceUuid,"characteristicUuid":obj.services[i].characteristics[u].characteristicUuid});
+                        setTimeout(ble.unsubscribeDevice, 5000);
+                        v++;
+                    }
+                }
+                //ble.charasteristics({"serviceUuid":serviceUuid,"characteristicUuids":charasteristicsUuids});
                 logStatus('BLE: serviceUuid: '+obj.services[i].serviceUuid);
                 /*for(key3 in obj.services[i].characteristics)
                     for(key2 in obj.services[i].characteristics[key3])
@@ -297,12 +313,12 @@ var ble = {
         }
           else
         {
-          logStatus("Unexpected characteristics heart status: " + obj.status);
+          logStatus("Unexpected characteristics status: " + obj.status);
         }
         //disconnectDevice();
     },
     characteristicsError: function() {
-        
+        logStatus('BLE: failed chasteristics status');
     },
     descriptors: function(obj) {
         bluetoothle.descriptors(ble.descriptorsSuccess, ble.descriptorsHeartError, obj);
@@ -322,5 +338,52 @@ var ble = {
     },
     descriptorsHeartError: function() {
         
+    },
+    subscribeSuccess: function(obj) {
+        if (obj.status == "subscribedResult")
+        {
+            logStatus("Subscription data received");
+
+            //Parse array of int32 into uint8
+            var bytes = bluetoothle.encodedStringToBytes(obj.value);
+
+            //Check for data
+            if (bytes.length == 0)
+            {
+                logStatus("Subscription result had zero length data");
+                return;
+            }
+
+            //Get the first byte that contains flags
+            var flag = bytes[0];
+
+            //Check if u8 or u16 and get heart rate
+            var hr;
+            if ((flag & 0x01) == 1)
+            {
+                var u16bytes = bytes.buffer.slice(1, 3);
+                var u16 = new Uint16Array(u16bytes)[0];
+                hr = u16;
+            }
+            else
+            {
+                var u8bytes = bytes.buffer.slice(1, 2);
+                var u8 = new Uint8Array(u8bytes)[0];
+                hr = u8;
+            }
+            logStatus("Heart Rate: " + hr);
+        }
+        else if (obj.status == "subscribed")
+        {
+            logStatus("Subscription started");
+        }
+        else
+      {
+        logStatus("Unexpected subscribe status: " + obj.status);
+        disconnectDevice();
+      }
+    },
+    subscribeError: function(obj) {
+        logStatus('BLE subscribe Error '+obj.status);
     }
 };
