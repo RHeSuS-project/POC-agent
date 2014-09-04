@@ -19,6 +19,7 @@
 var iOSPlatform = "iOS";
 var androidPlatform = "Android";
 var app = {
+    testmode:false,
     plugins: new Array('ble'/*, 'ant'*/),
     // Application Constructor
     initialize: function() {
@@ -94,5 +95,31 @@ var app = {
         logStatus('APP: connecting to '+type+' on address '+address);
         //eval(type+'.connect('+address+')');
         window[type].connectDevice(address);
+    },
+    subscribeResults: function(obj){
+        //var db = window.openDatabase("hrm", "1.0", "HRM DB", 100000000);
+        
+        var keys=new Array();
+        var values=new Array();
+        var i =0;
+        for(key in obj)
+        {
+            keys[i]=key;
+            values[i]=obj[key];
+        }
+        window.localStorage.setItem("key", "value");
+        var keyname = window.localStorage.key(i);
+        // keyname is now equal to "key"
+        var value = window.localStorage.getItem("key");
+        // value is now equal to "value"
+        window.localStorage.removeItem("key");
+        window.localStorage.setItem("key2", "value2");
+        window.localStorage.clear();
+        // localStorage is now empty
+
+        
+        //db.executeSql('CREATE TABLE IF NOT EXISTS HRM_'+obj.type+' (id unique, '+keys.join()+')');
+        //db.executeSql('INSERT INTO HRM_'+obj.type+' ('+keys.join()+') VALUES ("'+values.join('","')+'")');
+
     }
 };

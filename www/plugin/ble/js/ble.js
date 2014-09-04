@@ -201,6 +201,16 @@ var ble = {
               clearTimeout(ble.connectTimer);
         }
     },
+    disconnectDevice: function()
+    {
+      bluetoothle.disconnect(ble.disconnectSuccess, ble.disconnectError);
+    },
+    disconnectSuccess: function() {
+        
+    },
+    disconnectError: function() {
+        
+    },
     discover: function() {
         if (window.device.platform == iOSPlatform)
         {
@@ -332,17 +342,17 @@ var ble = {
         }
         else
         {
-          logStatus("Unexpected descriptors heart status: " + obj.status);
+          logStatus("BLE: Unexpected descriptors heart status: " + obj.status);
           disconnectDevice();
         }
     },
     descriptorsHeartError: function() {
-        
+        logStatus("BLE: Descriptors error");
     },
     subscribeSuccess: function(obj) {
         if (obj.status == "subscribedResult")
         {
-            logStatus("Subscription data received");
+            logStatus("BLE: Subscription data received");
 
             //Parse array of int32 into uint8
             var bytes = bluetoothle.encodedStringToBytes(obj.value);
@@ -350,7 +360,7 @@ var ble = {
             //Check for data
             if (bytes.length == 0)
             {
-                logStatus("Subscription result had zero length data");
+                logStatus("BLE: Subscription result had zero length data");
                 return;
             }
 
@@ -371,19 +381,55 @@ var ble = {
                 var u8 = new Uint8Array(u8bytes)[0];
                 hr = u8;
             }
-            logStatus("Heart Rate: " + hr);
+            /*for(key in obj)
+            {
+                logStatus('BLE: subscriptionValue: '+key+': '+obj[key]);
+            }*/
+            
+            app.subscribeResults({
+                type:'ble',
+                serviceUuid:obj.serviceUuid,
+                characteristicUuid:obj.characteristicUuid,
+                value:hr//,
+                //datetime: Math.round(new Date(sTime).getTime())
+            });
+            
+            logStatus(obj.serviceUuid+" - "+obj.characteristicUuid+" " + hr);
         }
         else if (obj.status == "subscribed")
         {
-            logStatus("Subscription started");
+            logStatus("BLE: Subscription started");
         }
         else
-      {
-        logStatus("Unexpected subscribe status: " + obj.status);
-        disconnectDevice();
-      }
+        {
+            logStatus("BLE: Unexpected subscribe status: " + obj.status);
+            disconnectDevice();
+        }
     },
     subscribeError: function(obj) {
-        logStatus('BLE subscribe Error '+obj.status);
+        logStatus('BLE subscribe Error trying read');
+        var paramsObj = {"serviceUuid":obj.serviceUuid, "characteristicUuid":obj.characteristicUuid};
+        bluetoothle.read(ble.readSuccess, ble.readError, paramsObj);
+    },
+    readSuccess: function(obj) {
+         if (obj.status == "read")
+        {
+            var bytes = bluetoothle.encodedStringToBytes(obj.value);
+            logStatus("Battery level: " + bytes[0]);
+
+            /*logStatus("Subscribing to heart rate for 5 seconds");
+            var paramsObj = {"serviceUuid":heartRateServiceUuid, "characteristicUuid":heartRateMeasurementCharacteristicUuid};
+            bluetoothle.subscribe(subscribeSuccess, subscribeError, paramsObj);
+            setTimeout(unsubscribeDevice, 5000);*/
+        }
+        else
+        {
+            logStatus("Unexpected read status: " + obj.status);
+            
+        }
+    },
+    readError: function(obj) {
+        logStatus("Read error: " + obj.error + " - " + obj.message);
+        //disconnectDevice();
     }
 };

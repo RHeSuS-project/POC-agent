@@ -68,3 +68,15 @@ function onScanResult(){
     }
     document.getElementById('ScanResults').innerHTML+='</ul>';
 }
+
+function connect(type, address) {
+    app.connectToDevice(type,address);
+}
+
+function disconnect(type, address) {
+    app.disconnectDevice(type,address);
+}
+
+function onSubscribeResult() {
+    
+}
