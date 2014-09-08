@@ -77,5 +77,12 @@ function disconnect(type, address) {
 }
 
 function onSubscribeResults(obj) {
-    
+    console.log('subscriptionObject:\n\
+{\n\
+type:'+obj.type+',\n\
+deviceAddress:'+obj.deviceAddress+',\n\
+serviceUuid:'+ obj.serviceUuid+',\n\
+characteristicUuid:'+obj.characteristicUuid+',\n\
+value:'+obj.value+',\n\
+datetime:'+obj.datetime+'}');
 }
