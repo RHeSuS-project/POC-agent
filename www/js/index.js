@@ -48,7 +48,6 @@ function loadPlugin(name){
             eval(name+'.construct()');
         };
     }
-
     document.getElementsByTagName("head")[0].appendChild(script);
 }
 
@@ -74,9 +73,9 @@ function connect(type, address) {
 }
 
 function disconnect(type, address) {
-    app.disconnectDevice(type,address);
+    app.disconnectFromDevice(type,address);
 }
 
-function onSubscribeResult() {
+function onSubscribeResults() {
     
 }

@@ -19,12 +19,24 @@
 var iOSPlatform = "iOS";
 var androidPlatform = "Android";
 var app = {
-    testmode:false,
     plugins: new Array('ble'/*, 'ant'*/),
+    connectedDevices: new Array(),
     // Application Constructor
     initialize: function() {
         //app.plugins=new Array('ble', 'ant');
+        if(testMode)
+        {
+            testMode.initialize();
+        }
         this.bindEvents();
+    },
+    addDeviceToConnectList: function(obj) {
+        if (app.connectedDevices.indexOf(obj) === -1)
+            app.connectedDevices.push(obj);
+    },
+    removeDeviceToConnectList: function(obj) {
+        if (app.connectedDevices.indexOf(obj) > -1)
+            app.connectedDevices.splice(obj);
     },
     // Bind Event Listeners
     //
@@ -96,9 +108,33 @@ var app = {
         //eval(type+'.connect('+address+')');
         window[type].connectDevice(address);
     },
-    subscribeResults: function(obj){
-        //var db = window.openDatabase("hrm", "1.0", "HRM DB", 100000000);
+    onConnectResult: function(obj) {
+        if(obj.status)
+        {
+            var object=obj;
+            delete object['status'];
+            app.addDeviceToConnectList(object);
+            logStatus('APP: connected to '+ obj.type +' - '+obj.name+' - '+ obj.address);
+        }
+        else
+        {
+            var object=obj;
+            delete object['status'];
+            app.removeDeviceToConnectList(object);
+            logStatus('APP: connection failed to '+ obj.type +' - '+obj.name+' - '+ obj.address);
+        }
+    },
+    connectResult: function() {
+        return app.connectedDevices;
+    },
+    disconnectFromDevice: function(type,address) {
         
+    },
+    disconnectResult: function(obj) {
+        
+    },
+    onSubscribeResults: function(obj){
+        //var db = window.openDatabase("hrm", "1.0", "HRM DB", 100000000);
         var keys=new Array();
         var values=new Array();
         var i =0;
@@ -116,10 +152,22 @@ var app = {
         window.localStorage.setItem("key2", "value2");
         window.localStorage.clear();
         // localStorage is now empty
-
-        
+        logStatus('APP: received subscription result.');
+        onSubscribeResults();
         //db.executeSql('CREATE TABLE IF NOT EXISTS HRM_'+obj.type+' (id unique, '+keys.join()+')');
         //db.executeSql('INSERT INTO HRM_'+obj.type+' ('+keys.join()+') VALUES ("'+values.join('","')+'")');
 
+    }, 
+    deviceIsConnected: function(type,address) {
+        var i = 0;
+        for(i=0;app.connectedDevices.length>i;i++)
+        {
+            if(app.connectedDevices[i].type===type)
+                if(app.connectedDevices[i].address===address)
+                {
+                    return true;
+                }
+        }
+        return false;
     }
 };

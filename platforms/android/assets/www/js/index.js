@@ -48,7 +48,6 @@ function loadPlugin(name){
             eval(name+'.construct()');
         };
     }
-
     document.getElementsByTagName("head")[0].appendChild(script);
 }
 
@@ -67,4 +66,16 @@ function onScanResult(){
         document.getElementById('ScanResults').innerHTML+='<li><a onclick="app.connectToDevice(\''+results[i].type+'\',\''+results[i].device.address+'\')">'+results[i].device.name+" - "+results[i].device.address+"</a></li>";
     }
     document.getElementById('ScanResults').innerHTML+='</ul>';
+}
+
+function connect(type, address) {
+    app.connectToDevice(type,address);
+}
+
+function disconnect(type, address) {
+    app.disconnectFromDevice(type,address);
+}
+
+function onSubscribeResults() {
+    
 }

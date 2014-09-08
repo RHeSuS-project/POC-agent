@@ -46,6 +46,7 @@
 /home/philip/NetBeansProjects/HRM/platforms/android/assets/www/plugin/ant/js/ant.js \
 /home/philip/NetBeansProjects/HRM/platforms/android/assets/www/js/index.js \
 /home/philip/NetBeansProjects/HRM/platforms/android/assets/www/js/app.js \
+/home/philip/NetBeansProjects/HRM/platforms/android/assets/www/js/testMode.js \
 /home/philip/NetBeansProjects/HRM/platforms/android/assets/www/img/logo.png \
 /home/philip/NetBeansProjects/HRM/platforms/android/assets/www/plugins/org.apache.cordova.media-capture \
 /home/philip/NetBeansProjects/HRM/platforms/android/assets/www/plugins/org.apache.cordova.dialogs \
