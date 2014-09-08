@@ -153,7 +153,7 @@ var app = {
         window.localStorage.clear();
         // localStorage is now empty
         logStatus('APP: received subscription result.');
-        onSubscribeResults();
+        onSubscribeResults(obj);
         //db.executeSql('CREATE TABLE IF NOT EXISTS HRM_'+obj.type+' (id unique, '+keys.join()+')');
         //db.executeSql('INSERT INTO HRM_'+obj.type+' ('+keys.join()+') VALUES ("'+values.join('","')+'")');
 

@@ -76,6 +76,6 @@ function disconnect(type, address) {
     app.disconnectFromDevice(type,address);
 }
 
-function onSubscribeResults() {
+function onSubscribeResults(obj) {
     
 }
