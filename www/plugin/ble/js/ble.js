@@ -30,13 +30,15 @@ var ble = {
     scanStartErrorMessage: null,
     scanStartRunning: false,
     scanResult: new Array(),
+    tempScanResult: new Array(),
     connectedDevices: null,
     currentConnectedDevice: null,
+    currentConnectedDeviceName: null,
     connectTimer: null,
     scanTimer: null,
     connectToNextDeviceTimer: 5000,
     connectingToDevice: null,
-    
+    isConnected: false,
     //activeSubscriptions: new Array(),
     // plugin Constructor
     construct: function() {
@@ -44,6 +46,7 @@ var ble = {
         ble.connectedDevices = new Array();
         if (ble.connectedDevices === null)
             ble.connectedDevices = new Array();
+        ble.initIsConnectedTimer();
     },
     addConnectedDevice: function(address) {
         if (ble.connectedDevices.indexOf(address) === -1)
@@ -52,6 +55,41 @@ var ble = {
     removeConnectedDevice: function(address) {
         if (ble.connectedDevices.indexOf(address) > -1)
             ble.connectedDevices.splice(address);
+    },
+    addScanResult: function(obj) {
+        //logStatus('APP: adding device to connected list.');
+        var sw=true;
+        var i=0;
+        for(i=0;ble.scanResult.length>i;i++)
+        {
+                if(ble.scanResult[i].address==obj.address)
+                    sw=false;
+        }
+
+         if (sw)
+            ble.scanResult.push(obj);
+        
+        sw=true;
+        i=0;
+        for(i=0;ble.tempScanResult.length>i;i++)
+        {
+                if(ble.tempScanResult[i].address==obj.address)
+                    sw=false;
+        }
+
+         if (sw)
+            ble.tempScanResult.push(obj);
+        //ble.tempScanResult.push(obj);
+    },
+    removeScanResult: function(obj) {
+       //logStatus('APP: removing device from connected list.');
+       var i=0;
+       for(i=0;ble.scanResult.length>i;i++)
+       {
+           if(ble.scanResult[i].type==obj.type)
+               if(ble.scanResult[i].address==obj.address)
+                   ble.scanResult.splice(i,1);
+       }
     },
     /*addActiveSubscription: function(object) {
         if (ble.activeSubscriptions.indexOf(object) === -1)
@@ -62,7 +100,14 @@ var ble = {
             ble.activeSubscriptions.splice(object);
     },*/
     connectToNextDevice: function() {
-        if(ble.connectedDevices.length>1)
+        if(!ble.isConnected)
+        {
+            if(ble.connectedDevices.length)
+            {
+                ble.connectDevice(ble.connectedDevices[0]);
+            }
+        }
+        else if(ble.connectedDevices.length>1)
         {
             var sw=true;
             if(ble.currentConnectedDevice)
@@ -70,7 +115,7 @@ var ble = {
                 if(ble.connectedDevices.indexOf(ble.currentConnectedDevice)>-1)
                     if(ble.connectedDevices.indexOf(ble.currentConnectedDevice)<ble.connectedDevices.length-1)
                     {
-                        ble.connectDevice(ble.connectedDevices.indexOf(ble.currentConnectedDevice)+1);
+                        ble.connectDevice(ble.connectedDevices[ble.connectedDevices.indexOf(ble.currentConnectedDevice)+1]);
                         sw=false;
                     }
             }
@@ -80,7 +125,24 @@ var ble = {
     },
     initConnectToNextDeviceTimer: function() {
         clearTimeout(ble.connectTimer);
-        ble.connectTimer=setTimeout(ble.connectToNextDevice,ble.connectToNextDeviceTimer);
+        ble.connectTimer=setInterval(ble.connectToNextDevice,ble.connectToNextDeviceTimer);
+    },
+    initIsConnectedTimer: function() {
+        //clearTimeout(ble.connectTimer);
+        ble.connectTimer=setInterval(ble.getIsConnected,ble.connectToNextDeviceTimer);
+    },
+    getIsConnected: function() {
+        bluetoothle.isConnected(ble.onIsConnected);
+    },
+    onIsConnected: function(obj) {
+        /*var string='';
+        for(key in obj)
+        {
+            string+=key+':'+obj[key]+', ';
+        }
+        logStatus('BLE: IsConnected '+string);*/
+        ble.isConnected=obj.isConnected;
+        ble.connectToNextDevice();
     },
     initialize: function(initCallbackSucces, initCallbackError) {
         logStatus('BLE: Initializing');
@@ -126,6 +188,7 @@ var ble = {
             }
             if (sw)
             {
+                //ble.tempScanResult=new Array();
                 var paramsObj = new Object();
                 bluetoothle.startScan(ble.scanStartSuccess, ble.scanStartError, paramsObj);
                 ble.scanStartRunning = true;
@@ -143,7 +206,9 @@ var ble = {
             console.log(obj.toLocaleString());
             logStatus("BLE: Result found: " + obj.name + ' - ' + obj.address);
             //scanClearTimeout();
-            ble.scanResult[ble.scanResult.length] = obj;
+            ble.addScanResult(obj);
+            //ble.scanResult.push(obj);
+            //ble.tempScanResult.push(obj);
             logStatus('size:' + ble.scanResult.length);
             app.onScanResult();
             //window.localStorage.setItem(addressKey, obj.address);
@@ -151,7 +216,14 @@ var ble = {
         }
         else if (obj.status == "scanStarted")
         {
-            ble.scanResult = new Array();
+            ble.tempScanResult = new Array();
+            if(ble.currentConnectedDevice && ble.isConnected)
+            {
+                ble.addScanResult({
+                        address:ble.currentConnectedDevice,
+                        name:''
+                    });
+            }
             logStatus("BLE: Scan was started successfully, stopping in 10");
             ble.scanTimer = setTimeout(ble.scanTimeout, 10000);
             ble.scanStartRunning = true;
@@ -163,6 +235,7 @@ var ble = {
         }
     },
     scanStartError: function(obj) {
+        ble.scanStartErrorMessage = logStatus("Start scan error: " + obj.error + " - " + obj.message);
         ble.scanStartErrorMessage = "Start scan error: " + obj.error + " - " + obj.message;
         logStatus(ble.scanStartErrorMessage);
         ble.scanStartRunning = false;
@@ -170,6 +243,8 @@ var ble = {
     scanTimeout: function() {
         logStatus("BLE: Scanning time out, stopping");
         ble.scanStop();
+        ble.scanResult=ble.tempScanResult;
+        app.onScanResult();
     },
     scanStop: function() {
         if (ble.scanStartRunning)
@@ -218,6 +293,7 @@ var ble = {
             ble.clearConnectTimeout();
             obj.status = true;
             obj.type = 'ble';
+            ble.isConnected=true;
             app.onConnectResult(obj);
 
             ble.discover();
@@ -237,12 +313,14 @@ var ble = {
     connectDeviceError: function(obj) {
         logStatus("BLE: connect error: " + obj.error + " - " + obj.message);
         logStatus('BLE: connect address: ' + obj.address);
-        for (key in obj)
-            logStatus('' + key + ' : ' + obj[key]);
-        ble.disconnectDevice(ble.tempCloseDevice);
+        /*for (key in obj)
+            logStatus('' + key + ' : ' + obj[key]);*/
+        ble.tempDisconnectDevice(ble.tempCloseDevice);
+        ble.isConnected=false;
         ble.clearConnectTimeout();
     },
     connectTimeout: function() {
+        ble.isConnected=false;
         logStatus("BLE: Connection timed out");
     },
     clearConnectTimeout: function() {
@@ -252,13 +330,25 @@ var ble = {
             clearTimeout(ble.connectTimer);
         }
     },
-    disconnectDevice: function(callbackSuccess, callbackError)
+    tempDisconnectDevice: function(callbackSuccess, callbackError)
     {
         if (callbackSuccess === undefined)
             callbackSuccess = ble.disconnectSuccess;
         if (callbackError === undefined)
             callbackError = ble.disconnectError;
         bluetoothle.disconnect(callbackSuccess, callbackError);
+    },
+    disconnectDevice: function(address,callbackSuccess, callbackError)
+    {
+        if (callbackSuccess === undefined)
+            callbackSuccess = ble.disconnectSuccess;
+        if (callbackError === undefined)
+            callbackError = ble.disconnectError;
+        if(address==ble.currentConnectedDevice)
+        {
+            bluetoothle.disconnect(callbackSuccess, callbackError);
+        }
+        ble.removeConnectedDevice(address);
     },
     disconnectSuccess: function(obj) {
         if (obj.status == "disconnected")
@@ -276,10 +366,12 @@ var ble = {
             ble.closeDevice();
         }
         obj.type = 'ble';
-        app.disconnectSuccess(obj);
+        app.onDisconnectResult(obj);
     },
-    disconnectError: function() {
+    disconnectError: function(obj) {
         logStatus("BLE: Disconnect error: " + obj.error + " - " + obj.message);
+        ble.closeDevice();
+        app.onDisconnectResult(obj);
     },
     tempCloseDevice: function(obj) {
         ble.closeDevice(ble.reAttemptConnect, ble.reAttemptConnect);
@@ -313,14 +405,15 @@ var ble = {
             logStatus("Unexpected close status: " + obj.status);
         }
         obj.type = 'ble';
-
-        app.disconnectResult(obj);
+        ble.isConnected=false;
+        app.onDisconnectResult(obj);
     },
     closeError: function(obj) {
         logStatus("Close error: " + obj.error + " - " + obj.message);
-
         obj.type = 'ble';
-        app.disconnectResult(obj);
+        ble.isConnected=false;
+        app.onDisconnectResult(obj);
+        //app.onConnectResult({'status':false,'type':'ble', 'address':ble.currentConnectedDevice});
     },
     discover: function() {
         if (window.device.platform == iOSPlatform)
@@ -381,7 +474,7 @@ var ble = {
         }
     },
     discoverError: function(obj) {
-        ble.disconnectDevice(ble.discoveryErrorDisconnect(),ble.discoveryErrorDisconnect());
+        ble.tempDisconnectDevice(ble.discoveryErrorDisconnect(),ble.discoveryErrorDisconnect());
     },
     discoveryErrorDisconnect: function(obj) {
         ble.closeDevice(ble.removeConnectedDevice(ble.currentConnectedDevice,ble.currentConnectedDevice));

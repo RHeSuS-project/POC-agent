@@ -20,23 +20,102 @@ var iOSPlatform = "iOS";
 var androidPlatform = "Android";
 var app = {
     plugins: new Array('ble'/*, 'ant'*/),
+    lastPushTime: 0,
+    minTimeBetweenPushes: 60000,
     connectedDevices: new Array(),
+    connectionInitialized:false,
+    subscriptionDataForStatistics:new Array(),
+    deviceStatuses: new Array(
+            {
+                name:'Not connected',
+                labelClass:'label-danger',
+                checked:false
+            },
+            {
+                name:'Connected',
+                labelClass:'label-success',
+                checked:true
+            },
+            {
+                name:'Unavailable',
+                labelClass:'label-warning',
+                checked:true
+            }
+    ),
     // Application Constructor
     initialize: function() {
-        //app.plugins=new Array('ble', 'ant');
-        if(testMode)
+        if(typeof testMode != 'undefined')
         {
             testMode.initialize();
         }
+        
+        
         this.bindEvents();
+        var i=0;
+        for(i=0;app.plugins.length>i;i++)
+        {
+            logStatus('Plugin loading '+app.plugins[i]);
+            loadPlugin(app.plugins[i]);
+        }
+        
+        setInterval(app.scanStart,10000);
+        setInterval(app.sendDataToService,300000);
     },
     addDeviceToConnectList: function(obj) {
-        if (app.connectedDevices.indexOf(obj) === -1)
-            app.connectedDevices.push(obj);
+        logStatus('APP: adding device to connected list.');
+        var sw=true;
+        var i=0;
+        for(i=0;app.connectedDevices.length>i;i++)
+        {
+            if(app.connectedDevices[i].type==obj.type)
+                if(app.connectedDevices[i].address==obj.address)
+                    sw=false;
+        }
+        
+        if (sw)
+        {
+             app.connectedDevices.push(obj);
+             //logStatus('APP: connectedDevices: '+JSON.stringify(app.connectedDevices));
+             window.localStorage.setItem('connectedDevices', JSON.stringify(app.connectedDevices));
+        }
     },
-    removeDeviceToConnectList: function(obj) {
-        if (app.connectedDevices.indexOf(obj) > -1)
-            app.connectedDevices.splice(obj);
+    removeDeviceFromConnectList: function(obj) {
+       logStatus('APP: removing device from connected list.');
+       var i=0;
+       for(i=0;app.connectedDevices.length>i;i++)
+       {
+           if(app.connectedDevices[i].type==obj.type)
+               if(app.connectedDevices[i].address==obj.address)
+               {
+                   app.connectedDevices.splice(i,1);
+                   window.localStorage.setItem('connectedDevices', JSON.stringify(app.connectedDevices));
+               }
+       }
+    },
+    getDeviceFromConnectList: function(obj) {
+        var i=0;
+       for(i=0;app.connectedDevices.length>i;i++)
+       {
+           if(app.connectedDevices[i].type==obj.type)
+               if(app.connectedDevices[i].address==obj.address)
+                   return app.connectedDevices[i];
+       }
+    },
+    sendDataToService: function() {
+        var networkState = reachability.code || reachability;
+
+        var states = {};
+        states[NetworkStatus.NOT_REACHABLE]                      = 'None';
+        states[NetworkStatus.REACHABLE_VIA_CARRIER_DATA_NETWORK] = 'CarrierData';
+        states[NetworkStatus.REACHABLE_VIA_WIFI_NETWORK]         = 'WiFi';
+
+        if(states[networkState]=='wifi')
+        {
+            if(app.lastPushTime<=(Math.round(new Date().getTime())-app.minTimeBetweenPushes))
+            {
+                logStatus(compressData(window.localStorage.getItem("devices")));
+            }
+        }
     },
     // Bind Event Listeners
     //
@@ -51,23 +130,39 @@ var app = {
     // function, we must explicitly call 'app.receivedEvent(...);'
     onDeviceReady: function() {
         app.receivedEvent('deviceready');
-        var i=0;
-        for(i=0;app.plugins.length>i;i++)
+    },
+    loadConnecteddevices: function() {
+        //logStatus('APP: loadingDevices '+JSON.stringify(JSON.parse(window.localStorage.getItem('connectedDevices'))));
+        //logStatus('APP: test: '+deviceList.length);
+        
+        if(!app.connectionInitialized)
         {
-            logStatus('Plugin loading');
-            loadPlugin(app.plugins[i]);
+            var deviceList=JSON.parse(window.localStorage.getItem('connectedDevices'));
+            //logStatus('connecting to: '+deviceList.type+' '+deviceList.address);
+                if(deviceList && deviceList.length)
+                {
+                    
+                    
+                    logStatus('connecting to: '+deviceList.length);//JSON.parse(window.localStorage.getItem('connectedDevices'))[0].type);
+                    var i=0;
+                    for(i=0;deviceList.length>i;i++)
+                    {
+                        for(key in deviceList[i])
+                        {
+                            for(key2 in deviceList[i][key])
+                            logStatus(key2+': '+deviceList[i][key][key2]);
+                        }
+                        app.connectToDevice(deviceList[i].type, deviceList[i].address);
+                    }
+                }
+            app.connectionInitialized=true;
         }
     },
     // Update DOM on a Received Event
     receivedEvent: function(id) {
         //app.scanStart();
-        var parentElement = document.getElementById(id);
-        var listeningElement = parentElement.querySelector('.listening');
-        var receivedElement = parentElement.querySelector('.received');
-
-        listeningElement.setAttribute('style', 'display:none;');
-        receivedElement.setAttribute('style', 'display:block;');
-
+        
+        //app.loadConnecteddevices();
         logStatus('Received Event: ' + id);
     },
     scanStart: function() {
@@ -81,31 +176,69 @@ var app = {
         logStatus('APP: Scan Started');
     },
     onScanResult: function() {
+        
         onScanResult();
         logStatus('APP: Scan Result received');
     },
     scanResult: function() {
+        app.loadConnecteddevices();
         var result=new Array();
         var k=0;
         var i=0;
-        for(var i=0;app.plugins.length>i;i++)
+        
+        var j=0;
+        var connectResults=app.connectedDevices;
+        /*for(j=0;connectResults.length>j;j++)
         {
-            var j=0;
+            result[k]={
+                type:app.plugins[i],
+                device:connectResults[j],
+                status: app.deviceStatuses[1]
+            };
+            k++;
+        }*/
+        
+        for(i=0;app.plugins.length>i;i++)
+        {
             var scanResults=eval(app.plugins[i]+".scanResult");
             for(j=0;scanResults.length>j;j++)
             {
-                result[k]={
+                var l=0;
+                var sw=1;
+                for(l=0;connectResults.length>l;l++)
+                {
+                    if(connectResults[l].type==app.plugins[i])
+                        if(connectResults[l].address==scanResults[j].address)
+                        {
+                            if(eval(app.plugins[i]+".isConnected"))
+                            {
+                                sw=0;
+
+                                result[k]={
+                                    type:connectResults[l].type,
+                                    device:connectResults[l],
+                                    status: app.deviceStatuses[1]
+                                };
+                                k++;
+                            }
+                        }
+                }
+                if(sw)
+                {
+                    result[k]={
                         type:app.plugins[i],
-                        device:scanResults[j]
-                };
-                k++;
+                        device:scanResults[j],
+                        status: app.deviceStatuses[0]
+                    };
+                    k++;
+                }
             }
         }
         return result;
     },
     connectToDevice: function(type,address) {
         logStatus('APP: connecting to '+type+' on address '+address);
-        //eval(type+'.connect('+address+')');
+        //eval(type+'.connectDevice(\''+address+'\')');
         window[type].connectDevice(address);
     },
     onConnectResult: function(obj) {
@@ -120,44 +253,140 @@ var app = {
         {
             var object=obj;
             delete object['status'];
-            app.removeDeviceToConnectList(object);
+            app.removeDeviceFromConnectList(object);
             logStatus('APP: connection failed to '+ obj.type +' - '+obj.name+' - '+ obj.address);
         }
+        onConnectResult(obj);
     },
     connectResult: function() {
         return app.connectedDevices;
     },
     disconnectFromDevice: function(type,address) {
-        
+        window[type].disconnectDevice(address);
+        app.removeDeviceFromConnectList({"type":type,"address":address});
     },
-    disconnectResult: function(obj) {
-        
+    onDisconnectResult: function(obj)
+    {
+        onDisconnectResult(obj);
     },
     onSubscribeResults: function(obj){
-        //var db = window.openDatabase("hrm", "1.0", "HRM DB", 100000000);
-        var keys=new Array();
-        var values=new Array();
-        var i =0;
-        for(key in obj)
-        {
-            keys[i]=key;
-            values[i]=obj[key];
-        }
-        window.localStorage.setItem("key", "value");
-        var keyname = window.localStorage.key(i);
-        // keyname is now equal to "key"
-        var value = window.localStorage.getItem("key");
-        // value is now equal to "value"
-        window.localStorage.removeItem("key");
-        window.localStorage.setItem("key2", "value2");
-        window.localStorage.clear();
-        // localStorage is now empty
+        app.storeSubscriptionData(obj);
+        app.storeSubscriptionDataForStatistics(obj);
         logStatus('APP: received subscription result.');
         onSubscribeResults(obj);
-        //db.executeSql('CREATE TABLE IF NOT EXISTS HRM_'+obj.type+' (id unique, '+keys.join()+')');
-        //db.executeSql('INSERT INTO HRM_'+obj.type+' ('+keys.join()+') VALUES ("'+values.join('","')+'")');
-
     }, 
+    storeSubscriptionDataForStatistics: function(obj) {
+        var sw=true;
+        var i = 0;
+        for(i=0;app.subscriptionDataForStatistics.length>i;i++)
+        {
+            var j=0;
+            while(app.subscriptionDataForStatistics.length>j && sw)
+            {
+                if(app.subscriptionDataForStatistics[i][j].datetime<(Math.round(new Date().getTime())-3600000))
+                {
+                    app.subscriptionDataForStatistics[i].splice(j,1);
+                }
+                else
+                    sw=false;
+            }
+        }
+        app.subscriptionDataForStatistics.push(obj);
+    },
+    storeSubscriptionData: function(obj) {
+        if(window.localStorage.getItem("devices")!=undefined)
+            var devices = JSON.parse(window.localStorage.getItem("devices"));
+        else
+            var devices = new Array();
+        if(!Array.isArray(devices))
+        {
+            devices=new Array();
+        }
+        var device = app.getDeviceFromConnectList({'type':obj.type, 'address':obj.deviceAddress});
+        if(device!=undefined)
+        {
+            var foundDevice=undefined;
+            var deviceIndex=devices.length;
+            var i=0;
+            for(i=0;devices.length>i;i++)
+            {
+                if(devices[i].type==obj.type)
+                    if(devices[i].address==obj.deviceAddress)
+                    {
+                        foundDevice= devices[i];
+                        deviceIndex=i;
+                    }
+            }
+            
+            if(foundDevice!=undefined)
+                device=foundDevice;
+            
+            device=app.addServicesToDevice(device, obj);
+            devices[deviceIndex]=device;
+            
+            window.localStorage.setItem('devices', JSON.stringify(devices));
+        }
+    },
+    addServicesToDevice: function(device, obj) {
+        if(device.services==undefined)
+            device.services=new Array();
+        var sw=true;
+        var i=0;
+        for(i=0;device.services.length>i;i++)
+        {
+            if(device.services[i].serviceUuid==obj.serviceUuid)
+            {
+                device.services[i].charasteristics=app.addCharasteristicsToService(device.services[i], obj);
+                sw=false;
+            }
+        }
+        if(sw)
+        {
+            device.services.push({
+                serviceUuid:obj.serviceUuid,
+                charasteristics: app.addCharasteristicsToService({
+                    serviceUuid:obj.serviceUuid
+                }, obj)
+            });
+        }
+        return device;
+    },
+    addCharasteristicsToService: function(service, obj)  {
+        if(service.charasteristics==undefined)
+            service.charasteristics=new Array();
+        var sw=true;
+        var i=0;
+        for(i=0;service.charasteristics.length>i;i++)
+        {
+            if(service.charasteristics[i].charasteristicUuid==obj.charasteristicUuid)
+            {
+                service.charasteristics[i].subscriptionData=app.addSubscriptionToCharasteristic(service.charasteristics[i], obj);
+                sw=false;
+            }
+        }
+        if(sw)
+        {
+            service.charasteristics.push({
+                charasteristicUuid:obj.charasteristicUuid,
+                subscriptionData: app.addSubscriptionToCharasteristic({
+                    charasteristicUuid:obj.charasteristicUuid
+                }, obj)
+            });
+        }
+        
+        return service.charasteristics;
+    },
+    addSubscriptionToCharasteristic: function(charasteristic, obj) {
+        if(charasteristic.subscriptionData==undefined)
+            charasteristic.subscriptionData=new Array();
+        
+        charasteristic.subscriptionData.push({
+            value:obj.value,
+            datetime:obj.datetime
+        });
+        logStatus('APP: subscriptionData Pushed');
+        return charasteristic.subscriptionData;
+    },
     deviceIsConnected: function(type,address) {
         var i = 0;
         for(i=0;app.connectedDevices.length>i;i++)

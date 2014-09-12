@@ -41,7 +41,45 @@ var testMode = {
             logStatus('APP: Scan Started');
         };
         app.scanResult=function() {
-            return getRandomArrayElements(testMode.devices,getRandomInt(1, testMode.devices.length));
+            var result=new Array();
+            var k=0;
+            var i=0;
+
+            var j=0;
+            var connectResults=app.connectedDevices;
+            for(j=0;connectResults.length>j;j++)
+            {
+                result[k]={
+                    type:app.plugins[i],
+                    device:connectResults[j],
+                    status: app.deviceStatuses[1]
+                };
+                k++;
+            }
+            
+            
+            var scanResults= getRandomArrayElements(testMode.devices,getRandomInt(1, testMode.devices.length));
+            var i=0;
+            for(j=0;scanResults.length>j;j++)
+            {
+                var l=0;
+                var sw=1;
+                for(l=0;result.length>l;l++)
+                {
+                    if(result[l].type==scanResults[j].type)
+                        if(result[l].device.address=scanResults[j].device.address)
+                        {
+                            sw=0;
+                        }
+                }
+                if(sw)
+                {
+                    scanResults[j].status=app.deviceStatuses[0];
+                    result[k]=scanResults[j];
+                    k++;
+                }
+            }
+            return result;
         };
         app.connectToDevice=function(type,address) {
             logStatus('APP: connecting to '+type+' on address '+address);

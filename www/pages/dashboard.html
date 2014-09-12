@@ -13,109 +13,18 @@
                     <!-- Main row -->
                     <div class="row">
                         <!-- Left col -->
-                        <section class="col-lg-7 connectedSortable">                            
-
-
+                        <section class="col-lg-7 connectedSortable">
                             <div class="box box-primary">
                                 <div class="box-header">
                                     <i class="fa fa-th"></i>
-                                    <h3 class="box-title">Found Devices</h3>
+                                    <h3 class="box-title">Devices</h3>
                                     <div class="box-tools pull-right">
-                                        
+                                        <button class="btn btn-default pull-right" onclick="app.scanStart();"><i class="fa fa-plus"></i> Scan for devices</button>
                                     </div>
                                 </div><!-- /.box-header -->
                                 <div class="box-body">
-                                    <ul class="todo-list">
-                                        <li>
-                                            <!-- drag handle -->
-                                            <span class="handle">
-                                                <i class="fa fa-ellipsis-v"></i>
-                                                <i class="fa fa-ellipsis-v"></i>
-                                            </span>
-                                            <!-- checkbox -->
-                                            <input type="checkbox" value="" name=""/>
-                                            <!-- todo text -->
-                                            <span class="text">MIO GLOBAL</span>
-                                            <!-- Emphasis label -->
-                                            <small class="label label-danger"><i class="fa fa-clock-o"></i> not connected</small>
-                                            <!-- General tools such as edit or delete-->
-                                            <div class="tools">
-                                                <i class="fa fa-connect"></i>
-                                                <i class="fa fa-trash-o"></i>
-                                            </div>
-                                        </li>
-                                        <li>
-                                            <!-- drag handle -->
-                                            <span class="handle">
-                                                <i class="fa fa-ellipsis-v"></i>
-                                                <i class="fa fa-ellipsis-v"></i>
-                                            </span>
-                                            <!-- checkbox -->
-                                            <input type="checkbox" value="" name=""/>
-                                            <!-- todo text -->
-                                            <span class="text">MIO GLOBAL</span>
-                                            <!-- Emphasis label -->
-                                            <small class="label label-danger"><i class="fa fa-clock-o"></i> not connected</small>
-                                            <!-- General tools such as edit or delete-->
-                                            <div class="tools">
-                                                <i class="fa fa-connect"></i>
-                                                <i class="fa fa-trash-o"></i>
-                                            </div>
-                                        </li>
-                                        <li>
-                                            <!-- drag handle -->
-                                            <span class="handle">
-                                                <i class="fa fa-ellipsis-v"></i>
-                                                <i class="fa fa-ellipsis-v"></i>
-                                            </span>
-                                            <!-- checkbox -->
-                                            <input type="checkbox" value="" name=""/>
-                                            <!-- todo text -->
-                                            <span class="text">MIO GLOBAL</span>
-                                            <!-- Emphasis label -->
-                                            <small class="label label-danger"><i class="fa fa-clock-o"></i> not connected</small>
-                                            <!-- General tools such as edit or delete-->
-                                            <div class="tools">
-                                                <i class="fa fa-connect"></i>
-                                                <i class="fa fa-trash-o"></i>
-                                            </div>
-                                        </li>
-                                        <li>
-                                            <!-- drag handle -->
-                                            <span class="handle">
-                                                <i class="fa fa-ellipsis-v"></i>
-                                                <i class="fa fa-ellipsis-v"></i>
-                                            </span>
-                                            <!-- checkbox -->
-                                            <input type="checkbox" value="" name=""/>
-                                            <!-- todo text -->
-                                            <span class="text">MIO GLOBAL</span>
-                                            <!-- Emphasis label -->
-                                            <small class="label label-danger"><i class="fa fa-clock-o"></i> not connected</small>
-                                            <!-- General tools such as edit or delete-->
-                                            <div class="tools">
-                                                <i class="fa fa-connect"></i>
-                                                <i class="fa fa-trash-o"></i>
-                                            </div>
-                                        </li>
-                                        <li>
-                                            <!-- drag handle -->
-                                            <span class="handle">
-                                                <i class="fa fa-ellipsis-v"></i>
-                                                <i class="fa fa-ellipsis-v"></i>
-                                            </span>
-                                            <!-- checkbox -->
-                                            <input type="checkbox" value="" name=""/>
-                                            <!-- todo text -->
-                                            <span class="text">MIO GLOBAL</span>
-                                            <!-- Emphasis label -->
-                                            <small class="label label-danger"><i class="fa fa-clock-o"></i> not connected</small>
-                                            <!-- General tools such as edit or delete-->
-                                            <div class="tools">
-                                                <i class="fa fa-connect"></i>
-                                                <i class="fa fa-trash-o"></i>
-                                            </div>
-                                        </li>
+                                    <ul class="todo-list deviceList">
+                                        
                                     </ul>
                                 </div><!-- /.box-body -->
                                 <div class="box-footer clearfix no-border">
@@ -126,105 +35,17 @@
                             
                             <div class="box box-primary">
                                 <div class="box-header">
-                                    <i class="fa fa-th"></i>
+                                    <i class="fa fa-bar-chart-o"></i>
                                     <h3 class="box-title">Active Subscriptions</h3>
+                                    <span id="subCounter"></span>
                                     <div class="box-tools pull-right">
                                         
                                     </div>
                                 </div><!-- /.box-header -->
                                 <div class="box-body">
-                                    <ul class="todo-list">
-                                        <li>
-                                            <!-- drag handle -->
-                                            <span class="handle">
-                                                <i class="fa fa-ellipsis-v"></i>
-                                                <i class="fa fa-ellipsis-v"></i>
-                                            </span>
-                                            <!-- checkbox -->
-                                            <input type="checkbox" value="" name=""/>
-                                            <!-- todo text -->
-                                            <span class="text">MIO GLOBAL</span>
-                                            <!-- Emphasis label -->
-                                            <small class="label label-danger"><i class="fa fa-clock-o"></i> not connected</small>
-                                            <!-- General tools such as edit or delete-->
-                                            <div class="tools">
-                                                <i class="fa fa-connect"></i>
-                                                <i class="fa fa-trash-o"></i>
-                                            </div>
-                                        </li>
-                                        <li>
-                                            <!-- drag handle -->
-                                            <span class="handle">
-                                                <i class="fa fa-ellipsis-v"></i>
-                                                <i class="fa fa-ellipsis-v"></i>
-                                            </span>
-                                            <!-- checkbox -->
-                                            <input type="checkbox" value="" name=""/>
-                                            <!-- todo text -->
-                                            <span class="text">MIO GLOBAL</span>
-                                            <!-- Emphasis label -->
-                                            <small class="label label-danger"><i class="fa fa-clock-o"></i> not connected</small>
-                                            <!-- General tools such as edit or delete-->
-                                            <div class="tools">
-                                                <i class="fa fa-connect"></i>
-                                                <i class="fa fa-trash-o"></i>
-                                            </div>
-                                        </li>
-                                        <li>
-                                            <!-- drag handle -->
-                                            <span class="handle">
-                                                <i class="fa fa-ellipsis-v"></i>
-                                                <i class="fa fa-ellipsis-v"></i>
-                                            </span>
-                                            <!-- checkbox -->
-                                            <input type="checkbox" value="" name=""/>
-                                            <!-- todo text -->
-                                            <span class="text">MIO GLOBAL</span>
-                                            <!-- Emphasis label -->
-                                            <small class="label label-danger"><i class="fa fa-clock-o"></i> not connected</small>
-                                            <!-- General tools such as edit or delete-->
-                                            <div class="tools">
-                                                <i class="fa fa-connect"></i>
-                                                <i class="fa fa-trash-o"></i>
-                                            </div>
-                                        </li>
-                                        <li>
-                                            <!-- drag handle -->
-                                            <span class="handle">
-                                                <i class="fa fa-ellipsis-v"></i>
-                                                <i class="fa fa-ellipsis-v"></i>
-                                            </span>
-                                            <!-- checkbox -->
-                                            <input type="checkbox" value="" name=""/>
-                                            <!-- todo text -->
-                                            <span class="text">MIO GLOBAL</span>
-                                            <!-- Emphasis label -->
-                                            <small class="label label-danger"><i class="fa fa-clock-o"></i> not connected</small>
-                                            <!-- General tools such as edit or delete-->
-                                            <div class="tools">
-                                                <i class="fa fa-connect"></i>
-                                                <i class="fa fa-trash-o"></i>
-                                            </div>
-                                        </li>
-                                        <li>
-                                            <!-- drag handle -->
-                                            <span class="handle">
-                                                <i class="fa fa-ellipsis-v"></i>
-                                                <i class="fa fa-ellipsis-v"></i>
-                                            </span>
-                                            <!-- checkbox -->
-                                            <input type="checkbox" value="" name=""/>
-                                            <!-- todo text -->
-                                            <span class="text">MIO GLOBAL</span>
-                                            <!-- Emphasis label -->
-                                            <small class="label label-danger"><i class="fa fa-clock-o"></i> not connected</small>
-                                            <!-- General tools such as edit or delete-->
-                                            <div class="tools">
-                                                <i class="fa fa-connect"></i>
-                                                <i class="fa fa-trash-o"></i>
-                                            </div>
-                                        </li>
-                                    </ul>
+                                    
+                                    <div id="interactive" style="height: 300px;"></div>
+                                    
                                 </div><!-- /.box-body -->
                                 <div class="box-footer clearfix no-border">
                                     <button class="btn btn-default pull-right"><i class="fa fa-plus"></i> Connect to all</button>
@@ -311,9 +132,8 @@
                                 
                             </div><!-- /.box -->       
                         </section>
-                            <script src="//cdnjs.cloudflare.com/ajax/libs/raphael/2.1.0/raphael-min.js"></script>
-<script src="js/jquery-ui-1.10.3.min.js" type="text/javascript"></script>
-
+                            <!--<script src="//cdnjs.cloudflare.com/ajax/libs/raphael/2.1.0/raphael-min.js"></script>-->
+        <script src="js/jquery-ui-1.10.3.min.js" type="text/javascript"></script>
 
         <script src="js/plugins/morris/morris.min.js" type="text/javascript"></script>
         <!-- Sparkline -->
@@ -339,3 +159,37 @@
         <!-- AdminLTE for demo purposes -->
         <script src="js/layout/demo.js" type="text/javascript"></script>
         
+        
+        <script src="js/plugins/flot/jquery.flot.min.js" type="text/javascript"></script>
+        <!-- FLOT RESIZE PLUGIN - allows the chart to redraw when the window is resized -->
+        <script src="js/plugins/flot/jquery.flot.resize.min.js" type="text/javascript"></script>
+        <!-- FLOT PIE PLUGIN - also used to draw donut charts -->
+        <script src="js/plugins/flot/jquery.flot.pie.min.js" type="text/javascript"></script>
+        <!-- FLOT CATEGORIES PLUGIN - Used to draw bar charts -->
+        <script src="js/plugins/flot/jquery.flot.categories.min.js" type="text/javascript"></script>
+        
+        <script type="text/javascript">
+                                        var interactive_plot = $.plot("#interactive", [flotChart()], {
+                    grid: {
+                        borderColor: "#f3f3f3",
+                        borderWidth: 1,
+                        tickColor: "#f3f3f3"
+                    },
+                    series: {
+                        shadowSize: 0, // Drawing is faster without shadows
+                        color: "#3c8dbc"
+                    },
+                    lines: {
+                        fill: true, //Converts the line chart to area chart
+                        color: "#3c8dbc"
+                    },
+                    yaxis: {
+                        min: 0,
+                        max: 300,
+                        show: true
+                    },
+                    xaxis: {
+                        show: true
+                    }
+                });
+                                    </script>
