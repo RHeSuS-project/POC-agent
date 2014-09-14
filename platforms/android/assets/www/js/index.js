@@ -22,7 +22,7 @@ function logStatus(status)
         var listeningElement = parentElement.querySelector('.listening');
 
         listeningElement.innerHTML+=status+'<br/>';*/
-    console.log(status);
+    //console.log(status);
 }
 
 function dump(obj) {
@@ -172,7 +172,7 @@ function getSubscriptionDataForStatistics(obj,datapoints,timespan) {
             {
                 var charasteristic=service.charasteristics[0];
             
-                //logStatus('test2value='+value);
+                console.log('charasteristicUuid='+obj.charasteristicUuid);
                 var i=0;
                 if(obj.charasteristicUuid)
                 {
@@ -289,6 +289,14 @@ function getLastsubscriptionValue(obj)
     }
     
     return value;
+}
+
+function connectToAllDevices() {
+    var results=app.scanResult();
+    for(var i=0;results.length>i;i++)
+    {
+        connect(results[i].type,results[i].device.address);
+    }
 }
 
 function getRandomInt(min, max) {

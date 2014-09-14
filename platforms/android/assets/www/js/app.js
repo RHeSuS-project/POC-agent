@@ -403,13 +403,14 @@ var app = {
         return device;
     },
     addCharasteristicsToService: function(service, obj)  {
+       
         if(service.charasteristics==undefined)
             service.charasteristics=new Array();
         var sw=true;
         var i=0;
         for(i=0;service.charasteristics.length>i;i++)
         {
-            if(service.charasteristics[i].charasteristicUuid==obj.charasteristicUuid)
+            if(service.charasteristics[i].charasteristicUuid==obj.characteristicUuid)
             {
                 service.charasteristics[i].subscriptionData=app.addSubscriptionToCharasteristic(service.charasteristics[i], obj);
                 sw=false;
@@ -418,13 +419,13 @@ var app = {
         if(sw)
         {
             service.charasteristics.push({
-                charasteristicUuid:obj.charasteristicUuid,
+                charasteristicUuid:obj.characteristicUuid,
                 subscriptionData: app.addSubscriptionToCharasteristic({
-                    charasteristicUuid:obj.charasteristicUuid
+                    charasteristicUuid:obj.characteristicUuid
                 }, obj)
             });
         }
-        
+        console.log("charasteristicUuid: "+service.charasteristics[service.charasteristics.length-1].charasteristicUuid);
         return service.charasteristics;
     },
     addSubscriptionToCharasteristic: function(charasteristic, obj) {
