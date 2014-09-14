@@ -35,7 +35,7 @@
                             
                             <div class="box box-primary">
                                 <div class="box-header">
-                                    <i class="fa fa-th"></i>
+                                    <i class="fa fa-bar-chart-o"></i>
                                     <h3 class="box-title">Active Subscriptions</h3>
                                     <span id="subCounter"></span>
                                     <div class="box-tools pull-right">
@@ -43,26 +43,31 @@
                                     </div>
                                 </div><!-- /.box-header -->
                                 <div class="box-body">
-                                    
-                                    <div id="interactive" style="height: 300px;"></div>
-                                    
+                                    <div class="row">
+                                        <div class="col-sm-12">
+                                            <select class="form-control" id="selectdevice"></select>
+                                        </div>
+                                        
+                                    </div>
+                                    <div class="row">
+                                        <div class="col-sm-12">
+                                            <h1 id="lastValue"></h1>
+                                            <div id="interactive" style="height: 300px;"></div>
+                                        </div>
+                                    </div>
                                 </div><!-- /.box-body -->
                                 <div class="box-footer clearfix no-border">
-                                    <button class="btn btn-default pull-right"><i class="fa fa-plus"></i> Connect to all</button>
+                                    <!--<button class="btn btn-default pull-right"><i class="fa fa-plus"></i> Connect to all</button>-->
                                 </div>
                             </div><!-- /.box -->
-                        </section><!-- /.Left col -->
-                        <!-- right col (We are only adding the ID to make the widgets sortable)-->
-                        <section class="col-lg-5 connectedSortable"> 
-
-                            <!-- Map box -->
+                        </section>
+                        <!--<section class="col-lg-5 connectedSortable"> 
                             <div class="box box-solid bg-light-blue-gradient">
                                 <div class="box-header">
-                                    <!-- tools box -->
                                     <div class="pull-right box-tools">
                                         <button class="btn btn-primary btn-sm daterange pull-right" data-toggle="tooltip" title="Date range"><i class="fa fa-calendar"></i></button>
                                         <button class="btn btn-primary btn-sm pull-right" data-widget='collapse' data-toggle="tooltip" title="Collapse" style="margin-right: 5px;"><i class="fa fa-minus"></i></button>
-                                    </div><!-- /. tools -->
+                                    </div>
 
                                     <i class="fa fa-map-marker"></i>
                                     <h3 class="box-title">
@@ -71,25 +76,20 @@
                                 </div>
                                 <div class="box-body">
                                     <div id="world-map" style="height: 250px;"></div>
-                                </div><!-- /.box-body-->
+                                </div>
                                 
                             </div>
-                            <!-- /.box -->
-
-                            <!-- Calendar -->
                             <div class="box box-solid ">
                                 <div class="box-header bg-green-gradient">
                                     <i class="fa fa-laptop"></i>
                                     <h3 class="box-title">Settings</h3>
-                                    <!-- tools box -->
                                     <div class="pull-right box-tools">
                                         
                                         <button class="btn btn-success btn-sm" data-widget="collapse"><i class="fa fa-minus"></i></button>
                                         <button class="btn btn-success btn-sm" data-widget="remove"><i class="fa fa-times"></i></button>                                        
-                                    </div><!-- /. tools -->
-                                </div><!-- /.box-header -->
+                                    </div>
+                                </div>
                                 <div class="box-body text-black">
-                                    <!--The calendar -->
                                     <div class="row">
                                         <div class="col-sm-6">
                                             <div class="clearfix">
@@ -128,12 +128,12 @@
                                     </div>
                                             </div></div>
                                 
-                                </div><!-- /.box-body -->  
+                                </div>  
                                 
-                            </div><!-- /.box -->       
-                        </section>
+                            </div>    
+                        </section>-->
                             <!--<script src="//cdnjs.cloudflare.com/ajax/libs/raphael/2.1.0/raphael-min.js"></script>-->
-        <script src="js/jquery-ui-1.10.3.min.js" type="text/javascript"></script>
+        
 
         <script src="js/plugins/morris/morris.min.js" type="text/javascript"></script>
         <!-- Sparkline -->
@@ -160,6 +160,8 @@
         <script src="js/layout/demo.js" type="text/javascript"></script>
         
         
+        
+        
         <script src="js/plugins/flot/jquery.flot.min.js" type="text/javascript"></script>
         <!-- FLOT RESIZE PLUGIN - allows the chart to redraw when the window is resized -->
         <script src="js/plugins/flot/jquery.flot.resize.min.js" type="text/javascript"></script>
@@ -169,14 +171,55 @@
         <script src="js/plugins/flot/jquery.flot.categories.min.js" type="text/javascript"></script>
         
         <script type="text/javascript">
-                                        var interactive_plot = $.plot("#interactive", [flotChart()], {
+            
+            
+            
+            function flotChart() {
+                var data = [], totalPoints = 60;
+                data=getSubscriptionDataForStatistics({},totalPoints);
+                //while(data.length<totalPoints){
+                //    data.push(getRandomInt(10,200));
+                //}
+                // Zip the generated y values with the x values
+                var res = [];
+                for (var i = 0; i < data.length; ++i) {
+                    logStatus(data[i]);
+                    res.push([i, data[i]]);
+                }
+                logStatus(JSON.stringify(res));
+                return res;
+            }
+            
+            function flotChartMin(flotChartData) {
+                var value=0;
+                for(var i=0;flotChartData.length>i;i++)
+                {
+                    if(flotChartData[i][1]<value)
+                        value=flotChartData[i][1];
+                        
+                }
+                return value;
+            }
+            
+            function flotChartMax(flotChartData) {
+                var value=0;
+                for(var i=0;flotChartData.length>i;i++)
+                {
+                    if(flotChartData[i][1]>value)
+                        value=flotChartData[i][1];
+                        
+                }
+                return value;
+            }
+            var flotChartData=flotChart();
+            /*var interactivePlot = $.plot("#interactive", [flotChartData], {
                     grid: {
                         borderColor: "#f3f3f3",
-                        borderWidth: 1,
+                        borderWidth: 0,
                         tickColor: "#f3f3f3"
                     },
                     series: {
-                        shadowSize: 0, // Drawing is faster without shadows
+                        //shadowSize: 0, // Drawing is faster without shadows
                         color: "#3c8dbc"
                     },
                     lines: {
@@ -184,12 +227,127 @@
                         color: "#3c8dbc"
                     },
                     yaxis: {
-                        min: 0,
-                        max: 300,
+                        min: flotChartMin(flotChartData),
+                        max: flotChartMax(flotChartData),
                         show: true
                     },
                     xaxis: {
                         show: true
                     }
-                });
-                                    </script>
+                });*/
+
+
+            var updateInterval = 500; //Fetch data ever x milliseconds
+            var realtime = "on"; //If == to on then fetch data every x seconds. else stop fetching
+            function update() {
+                if(!app.paused)
+                {
+                    var totalPoints=60;
+                    var flotChartData=flotChart();
+                        $.plot("#interactive", [flotChartData], {
+                        grid: {
+                            borderColor: "#f3f3f3",
+                            borderWidth: 0,
+                            tickColor: "#f3f3f3"
+                        },
+                        series: {
+                            //shadowSize: 0, // Drawing is faster without shadows
+                            color: "#3c8dbc"
+                        },
+                        lines: {
+                            fill: true, //Converts the line chart to area chart
+                            color: "#3c8dbc"
+                        },
+                        yaxis: {
+                            min: flotChartMin(flotChartData),
+                            max: flotChartMax(flotChartData),
+                            show: true
+                        },
+                        xaxis: {
+                            show: true
+                        }
+                    });
+            
+                    /*interactivePlot.yaxis={
+                        min: flotChartMin(flotChartData),
+                        max: flotChartMax(flotChartData),
+                        show: true
+                    };
+                    interactivePlot.setData([flotChartData]);
+                    //logStatus('testOutput '+JSON.stringify([flotChart()]));
+                    // Since the axes don't change, we don't need to call plot.setupGrid()
+                    interactivePlot.draw();*/
+            
+                    updateSelectDevice();
+                }
+                setTimeout(update,60000);
+            }
+            
+            function putLastsubscriptionValue() {
+                if(!app.paused)
+                {
+                    $('#lastValue').html(getLastsubscriptionValue());
+                }
+                else
+                {
+                    $('#lastValue').attr('style',"color:red");
+                }
+            }
+            
+            function updateSelectDevice(obj)
+            {
+                if(!obj)
+                    obj={};
+                if(!obj.deviceAddress)
+                    obj.deviceAddress=null;
+                if(!obj.charasteristicUuid)
+                    obj.charasteristicUuid=null;
+                if(!obj.serviceUuid)
+                    obj.serviceUuid=null;
+                var html='';
+                if(app.subscriptionDataForStatistics!==null)
+                    for(var i=0;app.subscriptionDataForStatistics.length>i;i++)
+                    {
+                        html+='<optgroup label="'+app.subscriptionDataForStatistics[i].name+' - '+app.subscriptionDataForStatistics[i].address+'" data-max-options="1">';
+                        for(var j=0;app.subscriptionDataForStatistics[i].services.length>j;j++)
+                        {
+                            for(var k=0;app.subscriptionDataForStatistics[i].services[j].charasteristics.length>k;k++)
+                            {
+                                var selected='';
+                                if(app.subscriptionDataForStatistics[i].address==obj.deviceAddress
+                                        && app.subscriptionDataForStatistics[i].services[j].charasteristics[k].charasteristicUuid==obj.charasteristicUuid
+                                        && app.subscriptionDataForStatistics[i].services[j].serviceUuid==obj.serviceUuid
+                                )
+                                {
+                                    selected='selected="selected"';
+                                }
+                                html+='<option value="'
+                                +app.subscriptionDataForStatistics[i].address+'-'
+                                +app.subscriptionDataForStatistics[i].services[j].serviceUuid+'-'
+                                +app.subscriptionDataForStatistics[i].services[j].charasteristics[k].charasteristicUuid
+                                +'" '
+                                +selected
+                                +'>'
+                                        +app.subscriptionDataForStatistics[i].services[j].serviceUuid+' - '
+                                        +app.subscriptionDataForStatistics[i].services[j].charasteristics[k].charasteristicUuid
+                                        +'</option>';
+                            }
+                        }
+                        html+="</optgroup>";
+                    }
+                $('#selectdevice').html(html);
+            }
+            
+                setTimeout(update, 10000);
+                setInterval(putLastsubscriptionValue,1000);
+                    
+    </script>
+    
+    <script src="js/plugins/bootstrap-select/bootstrap-select.js" type="text/javascript"></script>
+        <script type="text/javascript">
+            //$('#selectdevice');
+            /*$('.selectpicker').selectpicker({
+                style: 'btn-success btn'
+            });*/
+        </script>
+        

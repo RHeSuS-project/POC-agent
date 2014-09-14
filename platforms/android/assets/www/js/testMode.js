@@ -122,9 +122,7 @@ var testMode = {
     }
 };
 
-function getRandomInt(min, max) {
-    return Math.floor(Math.random() * (max - min + 1)) + min;
-}
+
 
 function getRandomArrayElements(arr, count) {
     var shuffled = arr.slice(0), i = arr.length, min = i - count, temp, index;

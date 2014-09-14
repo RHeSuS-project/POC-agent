@@ -24,7 +24,9 @@ var app = {
     minTimeBetweenPushes: 60000,
     connectedDevices: new Array(),
     connectionInitialized:false,
-    subscriptionDataForStatistics:new Array(),
+    subscriptionDataForStatistics:null,
+    devices: null,
+    paused: false,
     deviceStatuses: new Array(
             {
                 name:'Not connected',
@@ -60,6 +62,7 @@ var app = {
         
         setInterval(app.scanStart,10000);
         setInterval(app.sendDataToService,300000);
+        setInterval(app.storeDevicesToStorage,600000);
     },
     addDeviceToConnectList: function(obj) {
         logStatus('APP: adding device to connected list.');
@@ -102,7 +105,7 @@ var app = {
        }
     },
     sendDataToService: function() {
-        var networkState = reachability.code || reachability;
+        /*var networkState = reachability.code || reachability;
 
         var states = {};
         states[NetworkStatus.NOT_REACHABLE]                      = 'None';
@@ -115,7 +118,7 @@ var app = {
             {
                 logStatus(compressData(window.localStorage.getItem("devices")));
             }
-        }
+        }*/
     },
     // Bind Event Listeners
     //
@@ -123,6 +126,15 @@ var app = {
     // 'load', 'deviceready', 'offline', and 'online'.
     bindEvents: function() {
         document.addEventListener('deviceready', this.onDeviceReady, false);
+        document.addEventListener("pause", this.onPause, false);
+        document.addEventListener("resume", this.onResume, false);
+    },
+    onPause: function() {
+        this.paused=true;
+    },
+    onResume: function()
+    {
+        this.paused=false;
     },
     // deviceready Event Handler
     //
@@ -176,7 +188,6 @@ var app = {
         logStatus('APP: Scan Started');
     },
     onScanResult: function() {
-        
         onScanResult();
         logStatus('APP: Scan Result received');
     },
@@ -276,28 +287,69 @@ var app = {
         onSubscribeResults(obj);
     }, 
     storeSubscriptionDataForStatistics: function(obj) {
-        var sw=true;
-        var i = 0;
-        for(i=0;app.subscriptionDataForStatistics.length>i;i++)
-        {
-            var j=0;
-            while(app.subscriptionDataForStatistics.length>j && sw)
-            {
-                if(app.subscriptionDataForStatistics[i][j].datetime<(Math.round(new Date().getTime())-3600000))
-                {
-                    app.subscriptionDataForStatistics[i].splice(j,1);
-                }
-                else
-                    sw=false;
-            }
-        }
-        app.subscriptionDataForStatistics.push(obj);
-    },
-    storeSubscriptionData: function(obj) {
-        if(window.localStorage.getItem("devices")!=undefined)
+        if(app.subscriptionDataForStatistics!==null)
+            var devices=app.subscriptionDataForStatistics;
+        else if(window.localStorage.getItem("devices")!=undefined)
             var devices = JSON.parse(window.localStorage.getItem("devices"));
         else
             var devices = new Array();
+        devices=app.prepareDevicesForStorage(devices, obj);
+        var i=0;
+        var sw=true;
+        while(devices.length>i && sw)
+        {
+            var deletesw=true;
+            var j=0;
+            for(j=0;devices[i].services.length>j;j++)
+            {
+                var k=0;
+                for(k=0;devices[i].services[j].charasteristics.length>k;k++)
+                {
+                    var l=0;
+                    while(devices[i].services[j].charasteristics[k].subscriptionData.length>l)
+                    {
+                        if(devices[i].services[j].charasteristics[k].subscriptionData[l].datetime<(Math.round(new Date().getTime())-4000000))
+                        {
+                            devices[i].services[j].charasteristics[k].subscriptionData.splice(l,1);
+                        }
+                        else
+                            l++;
+                    }
+                    if(devices[i].services[j].charasteristics[k].subscriptionData.length)
+                    {
+                        deletesw=false;
+                    }
+                }
+            }
+            
+            if(deletesw)
+            {
+                devices.splice(i,1);
+            }
+            else
+                i++;
+        }
+        
+        app.subscriptionDataForStatistics=devices;
+    },
+    storeSubscriptionData: function(obj) {
+        if(app.devices!==null)
+            var devices=app.devices
+        else if(window.localStorage.getItem("devices")!=undefined)
+            var devices = JSON.parse(window.localStorage.getItem("devices"));
+        else
+            var devices = new Array();
+        
+        devices=app.prepareDevicesForStorage(devices, obj);
+        app.devices=devices;
+        //window.localStorage.setItem('devices', JSON.stringify(devices));
+    },
+    storeDevicesToStorage: function()
+    {
+        if(app.devices!==null)
+            window.localStorage.setItem('devices', JSON.stringify(app.devices));
+    },
+    prepareDevicesForStorage: function(devices, obj) {
         if(!Array.isArray(devices))
         {
             devices=new Array();
@@ -323,9 +375,8 @@ var app = {
             
             device=app.addServicesToDevice(device, obj);
             devices[deviceIndex]=device;
-            
-            window.localStorage.setItem('devices', JSON.stringify(devices));
         }
+        return devices;
     },
     addServicesToDevice: function(device, obj) {
         if(device.services==undefined)

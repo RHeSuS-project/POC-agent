@@ -112,53 +112,185 @@ function onDisconnectResult(type,address){
 }
 
 function onSubscribeResults(obj) {
-    console.log('subscriptionObject:\n\
+    /*console.log('subscriptionObject:\n\
 {\n\
 type:'+obj.type+',\n\
 deviceAddress:'+obj.deviceAddress+',\n\
 serviceUuid:'+ obj.serviceUuid+',\n\
 characteristicUuid:'+obj.characteristicUuid+',\n\
 value:'+obj.value+',\n\
-datetime:'+obj.datetime+'}');
+datetime:'+obj.datetime+'}');*/
 }
     
-function flotChart() {
-    var data = [], totalPoints = 100;
-     if (data.length > 0)
-                        data = data.slice(1);
 
-                    // Do a random walk
-                    while (data.length < totalPoints) {
-
-                        var prev = data.length > 0 ? data[data.length - 1] : 50,
-                                y = prev + Math.random() * 10 - 5;
-
-                        if (y < 0) {
-                            y = 0;
-                        } else if (y > 100) {
-                            y = 100;
+                
+function getSubscriptionDataForStatistics(obj,datapoints,timespan) {
+    if(!timespan)
+        timespan=3600000;
+    if(!datapoints)
+        datapoints=60;
+    if(!obj)
+        obj={};
+    var value=0;
+    var data=new Array();
+    if(app.subscriptionDataForStatistics!==null)
+        
+    if(app.subscriptionDataForStatistics.length)
+    {
+        var device=app.subscriptionDataForStatistics[0];
+        //logStatus('test4value='+value);
+        var i=0;
+        if(obj.deviceAddress)
+        {
+            for(i=0;app.subscriptionDataForStatistics.length>i;i++)
+            {
+                if(app.subscriptionDataForStatistics[i].address==obj.deviceAddress)
+                {
+                    device=app.subscriptionDataForStatistics[i];
+                }
+            }
+        }
+        
+        if(device.services && device.services.length)
+        {
+            var service=device.services[0];
+            
+            //logStatus('test3value='+value);
+            var i=0;
+            if(obj.serviceUuid)
+            {
+                for(i=0;device.services.length>i;i++)
+                {
+                    if(device.services[i].serviceUuid==obj.serviceUuid)
+                    {
+                        service=device.services[i];
+                    }
+                }
+            }
+            
+            if(service.charasteristics && service.charasteristics.length)
+            {
+                var charasteristic=service.charasteristics[0];
+            
+                //logStatus('test2value='+value);
+                var i=0;
+                if(obj.charasteristicUuid)
+                {
+                    for(i=0;service.charasteristics.length>i;i++)
+                    {
+                        if(service.charasteristics[i].charasteristicUuid==obj.charasteristicUuid)
+                        {
+                            charasteristic=service.charasteristics[i];
                         }
-
-                        data.push(y);
                     }
-
-                    // Zip the generated y values with the x values
-                    var res = [];
-                    for (var i = 0; i < data.length; ++i) {
-                        res.push([i, data[i]]);
+                }
+                
+                if(charasteristic.subscriptionData && charasteristic.subscriptionData.length)
+                {
+                    logStatus('testlength='+charasteristic.subscriptionData.length);
+                    var currentDatetime=(Math.round(new Date().getTime())-timespan);
+                    
+                    //value=charasteristic.subscriptionData[0].value;
+                    var datetime=charasteristic.subscriptionData[0].datetime;
+                    
+                    while(datetime>=currentDatetime)
+                    {
+                        data[data.length]=value;
+                        currentDatetime=currentDatetime+(timespan/datapoints);
                     }
-
-                    return res;
+                    
+                    var d=0;
+                    for(d=0;charasteristic.subscriptionData.length>d;d++)
+                    {
+                        if(charasteristic.subscriptionData[d].datetime>=currentDatetime)
+                        {
+                            value=charasteristic.subscriptionData[d].value;
+                            datetime=charasteristic.subscriptionData[d].datetime;
+                        }
+                        while(datetime>=currentDatetime)
+                        {
+                            data[data.length]=value;
+                            currentDatetime=currentDatetime+(timespan/datapoints);
+                        }
+                    }
+                }
+            }
+        }
+    }
+    while(data.length<datapoints)
+    {
+        data[data.length]=value;
+    }
+    return data;
 }
 
-var updateInterval = 500; //Fetch data ever x milliseconds
-                var realtime = "on"; //If == to on then fetch data every x seconds. else stop fetching
-                function update() {
-
-                    interactive_plot.setData([getRandomData()]);
-
-                    // Since the axes don't change, we don't need to call plot.setupGrid()
-                    interactive_plot.draw();
-                    if (realtime === "on")
-                        setTimeout(update, updateInterval);
+function getLastsubscriptionValue(obj)
+{
+    if(!obj)
+        obj={};
+    var value=0;
+    if(app.subscriptionDataForStatistics!==null)
+    if(app.subscriptionDataForStatistics.length)
+    {
+        var device=app.subscriptionDataForStatistics[0];
+        //logStatus('test4value='+value);
+        var i=0;
+        if(obj.deviceAddress)
+        {
+            for(i=0;app.subscriptionDataForStatistics.length>i;i++)
+            {
+                if(app.subscriptionDataForStatistics[i].address==obj.deviceAddress)
+                {
+                    device=app.subscriptionDataForStatistics[i];
                 }
+            }
+        }
+        
+        if(device.services && device.services.length)
+        {
+            var service=device.services[0];
+            
+            //logStatus('test3value='+value);
+            var i=0;
+            if(obj.serviceUuid)
+            {
+                for(i=0;device.services.length>i;i++)
+                {
+                    if(device.services[i].serviceUuid==obj.serviceUuid)
+                    {
+                        service=device.services[i];
+                    }
+                }
+            }
+            
+            if(service.charasteristics && service.charasteristics.length)
+            {
+                var charasteristic=service.charasteristics[0];
+            
+                //logStatus('test2value='+value);
+                var i=0;
+                if(obj.charasteristicUuid)
+                {
+                    for(i=0;service.charasteristics.length>i;i++)
+                    {
+                        if(service.charasteristics[i].charasteristicUuid==obj.charasteristicUuid)
+                        {
+                            charasteristic=service.charasteristics[i];
+                        }
+                    }
+                }
+                
+                if(charasteristic.subscriptionData && charasteristic.subscriptionData.length)
+                {
+                    return charasteristic.subscriptionData[charasteristic.subscriptionData.length-1].value;
+                }
+            }
+        }
+    }
+    
+    return value;
+}
+
+function getRandomInt(min, max) {
+    return Math.floor(Math.random() * (max - min + 1)) + min;
+}
