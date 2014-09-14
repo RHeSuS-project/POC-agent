@@ -425,7 +425,6 @@ var app = {
                 }, obj)
             });
         }
-        console.log("charasteristicUuid: "+service.charasteristics[service.charasteristics.length-1].charasteristicUuid);
         return service.charasteristics;
     },
     addSubscriptionToCharasteristic: function(charasteristic, obj) {

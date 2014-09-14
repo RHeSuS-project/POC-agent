@@ -203,7 +203,7 @@ var ble = {
     scanStartSuccess: function(obj) {
         if (obj.status == "scanResult")
         {
-            console.log(obj.toLocaleString());
+            //console.log(obj.toLocaleString());
             logStatus("BLE: Result found: " + obj.name + ' - ' + obj.address);
             //scanClearTimeout();
             ble.addScanResult(obj);
