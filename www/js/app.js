@@ -79,7 +79,7 @@ var app = {
         {
              app.connectedDevices.push(obj);
              //logStatus('APP: connectedDevices: '+JSON.stringify(app.connectedDevices));
-             window.localStorage.setItem('connectedDevices', JSON.stringify(app.connectedDevices));
+             window.localStorage.setItem('connectedDevices', compressData(JSON.stringify(app.connectedDevices)));
         }
     },
     removeDeviceFromConnectList: function(obj) {
@@ -91,7 +91,7 @@ var app = {
                if(app.connectedDevices[i].address==obj.address)
                {
                    app.connectedDevices.splice(i,1);
-                   window.localStorage.setItem('connectedDevices', JSON.stringify(app.connectedDevices));
+                   window.localStorage.setItem('connectedDevices', compressData(JSON.stringify(app.connectedDevices)));
                }
        }
     },
@@ -149,7 +149,7 @@ var app = {
         
         if(!app.connectionInitialized)
         {
-            var deviceList=JSON.parse(window.localStorage.getItem('connectedDevices'));
+            var deviceList=JSON.parse(decompressData(window.localStorage.getItem('connectedDevices')));
             //logStatus('connecting to: '+deviceList.type+' '+deviceList.address);
                 if(deviceList && deviceList.length)
                 {
@@ -290,7 +290,7 @@ var app = {
         if(app.subscriptionDataForStatistics!==null)
             var devices=app.subscriptionDataForStatistics;
         else if(window.localStorage.getItem("devices")!=undefined)
-            var devices = JSON.parse(window.localStorage.getItem("devices"));
+            var devices = JSON.parse(decompressData(window.localStorage.getItem("devices")));
         else
             var devices = new Array();
         devices=app.prepareDevicesForStorage(devices, obj);
@@ -336,7 +336,7 @@ var app = {
         if(app.devices!==null)
             var devices=app.devices
         else if(window.localStorage.getItem("devices")!=undefined)
-            var devices = JSON.parse(window.localStorage.getItem("devices"));
+            var devices = JSON.parse(decompressData(window.localStorage.getItem("devices")));
         else
             var devices = new Array();
         
@@ -347,7 +347,7 @@ var app = {
     storeDevicesToStorage: function()
     {
         if(app.devices!==null)
-            window.localStorage.setItem('devices', JSON.stringify(app.devices));
+            window.localStorage.setItem('devices', compressData(JSON.stringify(app.devices)));
     },
     prepareDevicesForStorage: function(devices, obj) {
         if(!Array.isArray(devices))
