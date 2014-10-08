@@ -155,7 +155,6 @@ function getSubscriptionDataForStatistics(obj,datapoints,timespan) {
         {
             var service=device.services[0];
             
-            //logStatus('test3value='+value);
             var i=0;
             if(obj.serviceUuid)
             {

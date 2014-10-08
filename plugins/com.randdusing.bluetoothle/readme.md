@@ -7,6 +7,7 @@ Bluetooth LE PhoneGap Plugin
 * PhoneGap 3.0.0 or higher
 * Android 4.3 or higher
 * iOS 7 or higher
+* Windows Phone 8.1 (Tested on Nokia Lumia 630)
 * Device hardware must be certified for Bluetooth LE. i.e. Nexus 7 (2012) doesn't support Bluetooth LE even after upgrading to 4.3 (or higher) without a modification
 * List of devices: http://www.bluetooth.com/Pages/Bluetooth-Smart-Devices-List.aspx
 
@@ -18,10 +19,10 @@ Bluetooth LE PhoneGap Plugin
 * Tested with a heart rate monitor, so some scenarios especially those involving writing characteristics may not work as I was unable to test it. If you run into an issue, log it and I'll try to fix it. If you let me borrow a device, I can probably fix it even quicker. :)
 * Limited to connecting to a single device at a time (Pretty sure it's feasible and not too difficult to implement, but a low priorty for my original project) ** Hope to begin working on this starting in July
 * <del>All discovery, read and write operations must be done sequentially. i.e read characteristic x1234, wait for read result, read characteristic x5678, wait for read result, etc. More info on http://stackoverflow.com/questions/18011816/has-native-android-ble-gatt-implementation-synchronous-nature (Eventually queuing could be added, but a low priority for my original project)</del> There's now support for multiple operations. For example, you can write characteristic A or read characteristic B while subscribed to characteristic C.
-* No support for Windows Phone currently. **Update: Windows Phone 8.1 supports Bluetooth LE and devices are pretty cheap, so this will be a priority as soon as it's released. Originally planned to buy a Windows 8.1 Phone before moving to Korea, but the one I wanted did come out in time. Still deciding what to do.
+* <del>No support for Windows Phone currently. **Update: Windows Phone 8.1 supports Bluetooth LE and devices are pretty cheap, so this will be a priority as soon as it's released. Originally planned to buy a Windows 8.1 Phone before moving to Korea, but the one I wanted did come out in time. Still deciding what to do.
 * Disconnecting and quickly reconnecting causes issues on Android. The device becomes connected again, but then quickly disconnects. Adding a timeout before reconnecting fixed the issue for me. I'm not sure if this is a problem with the plugin or Android's Bluetooth LE implementation.
 * For subscribing, indication hasn't been tested since my heart rate monitor doesn't support it.
-* Characteristic properties are not returned during discovery. If anyone requests this, I should be able to add it fairly easily.
+* <del>Characteristic properties are not returned during discovery. If anyone requests this, I should be able to add it fairly easily.</del>Charactertistic properties are now returned. See discovery/characteristics method documentation for more info.
 * Characteristic and descriptor permissions are not returned during discovery. If anyone requests this, I should be able to add it fairly easily, at least for Android. iOS doesn't appear to use permissions.
 
 ## Discovery Android vs iOS ##
@@ -34,6 +35,16 @@ Since iOS returns the 16 bit version of the "out of the box" UUIDs even if a 128
 Android on the other hand only uses the 128 bit version, but the plugin will automatically convert 16 bit UUIDs to the 128 bit version on input and output.
 
 https://developer.bluetooth.org/gatt/services/Pages/ServicesHome.aspx
+
+## Advertisement Data / MAC Address ##
+On iOS, the MAC address is hidden from the advertisement packet, and the address returned from the scanResult is a generated, device-specific address. This is a problem when using devices like iBeacons where you need the MAC Address. Fortunately the CLBeacon class can be used for this, but unfortunately it's not supported in this plugin.
+One option is to set Manufacturer Specific Data in the advertisement packet if that's possible in your project.
+Another option is to connect to the device and use the "Device Information" (0x180A) service, but connecting to each device is much more energy intensive than scanning for advertisement data.
+
+Some related links:
+https://stackoverflow.com/questions/18973098/get-mac-address-of-bluetooth-low-energy-peripheral
+https://stackoverflow.com/questions/22833198/get-advertisement-data-for-ble-in-ios
+
 
 ## Installation ##
 
@@ -122,6 +133,16 @@ For example:
 ```
 
 
+
+## Properties ##
+Characteristics can have the following different properties: broadcast, read, writeWithoutResponse, write, notify, indicate, authenticatedSignedWrites, extendedProperties, notifyEncryptionRequired, indicateEncryptionRequired
+If the characteristic has a property, it will exist as a key in the characteristic's properties object. See discovery() or characteristics()
+
+https://developer.android.com/reference/android/bluetooth/BluetoothGattCharacteristic.html
+https://developer.apple.com/library/mac/documentation/CoreBluetooth/Reference/CBCharacteristic_Class/translated_content/CBCharacteristic.html#//apple_ref/c/tdef/CBCharacteristicProperties
+
+
+
 ## Life Cycle ##
 
 1. initialize
@@ -134,7 +155,7 @@ For example:
 
 
 ## initialize ##
-Initialize Bluetooth on the device. Must be called before anything else. Callback will continuously be used whenever Bluetooth is enabled or disabled. Note: Although Bluetooth initialization could initially be successful, there's no guarantee whether it will stay enabled. Each call checks whether Bluetooth is disabled. If it becomes disabled, the user must connect to the device, start a read/write operation, etc again. If Bluetooth is disabled, you can request the user to enable it by setting the request property to true. The `request` property in the `params` argument is optional and defaults to false.
+Initialize Bluetooth on the device. Must be called before anything else. Callback will continuously be used whenever Bluetooth is enabled or disabled. Note: Although Bluetooth initialization could initially be successful, there's no guarantee whether it will stay enabled. Each call checks whether Bluetooth is disabled. If it becomes disabled, the user must connect to the device, start a read/write operation, etc again. If Bluetooth is disabled, you can request the user to enable it by setting the request property to true. The `request` property in the `params` argument is optional and defaults to false. Also, this function should only be called once. But if it's called subsequent times, it will return either status => enabled or error => enable.
 
 ```javascript
 bluetoothle.initialize(initializeSuccessCallback, initializeErrorCallback, params);
@@ -155,7 +176,7 @@ bluetoothle.initialize(initializeSuccessCallback, initializeErrorCallback, param
 
 
 ### startScan ###
-Scan for Bluetooth LE devices. Since scanning is expensive, stop as soon as possible. The Phonegap app should use a timer to limit the scan interval.
+Scan for Bluetooth LE devices. Since scanning is expensive, stop as soon as possible. The Phonegap app should use a timer to limit the scan interval. Also Android uses an AND operator for filtering, while iOS uses an OR operator for filtering.
 
 ```javascript
 bluetoothle.startScan(startScanSuccessCallback, startScanErrorCallback, params);
@@ -179,6 +200,7 @@ bluetoothle.startScan(startScanSuccessCallback, startScanErrorCallback, params);
 {"status":"scanStarted"};
 {"status":"scanResult","address":"01:23:45:67:89:AB","name":"Polar H7","rssi":-5}; /* Android */
 {"status":"scanResult","address":"XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX","name":"Polar H7","rssi":-5}; /* iOS */
+{"status":"scanResult","address":"0123456789AB","name":"Polar H7"}; /* WP8.1 */
 ```
 
 
@@ -280,6 +302,7 @@ Service Object:
 
 Characteristic Object:
 * characteristicUuid = Characteristic's uuid
+* properties = If the property is defined as a key, the characteristic has that property
 * descriptors = Array of descriptor objects below
 
 Descriptor Object:
@@ -300,7 +323,11 @@ Descriptor Object:
             {
               "descriptorUuid":"2902"
             }
-          ]
+          ],
+          "properties":
+          {
+          	"read":true,
+          } 
         },
         {
           "characteristicUuid":"2a38",
@@ -330,7 +357,7 @@ bluetoothle.services(servicesSuccessCallback, servicesErrorCallback, params);
 
 ##### Success Return #####
 ```javascript
-{"status":"discoverServices","serviceUuids":["180D","180F"]}
+{"status":"discoveredServices","serviceUuids":["180d"],"name":"Polar H7 259536","address":"6A267C59-3364-544C-F2AE-1616AE34F2C3"}
 ```
 
 
@@ -349,7 +376,7 @@ bluetoothle.characteristics(characteristicsSuccessCallback, characteristicsError
 
 ##### Success Return #####
 ```javascript
-{"status":"discoverCharacteristics","serviceUuid":"180D","characteristicUuids":["2A37","2A38"]}
+{"status":"discoveredCharacteristics","characteristics":[{"properties":{"notify":true},"characteristicUuid":"2a37"}],"name":"Polar H7 259536","address":"6A267C59-3364-544C-F2AE-1616AE34F2C3"}
 ```
 
 
@@ -368,7 +395,7 @@ bluetoothle.characteristics(descriptorsSuccessCallback, descriptorsErrorCallback
 
 ##### Success Return #####
 ```javascript
-{"status":"discoverDescriptors","serviceUuid":"180D","characteristicUuid":"2A37","descriptorUuids":["2902"]}
+{"status":"discoveredDescriptors","descriptorUuids":["2902"],"characteristicUuid":"2a37","name":"Polar H7 259536","serviceUuid":"180d","address":"6A267C59-3364-544C-F2AE-1616AE34F2C3"}
 ```
 
 
@@ -444,9 +471,10 @@ bluetoothle.write(writeSuccessCallback, writeErrorCallback, params);
 
 ##### Params #####
 Value is a base64 encoded string of bytes to write. Use bluetoothle.bytesToEncodedString(bytes) to convert to base64 encoded string from a unit8Array.
+To write without response, set type to "noResponse". Any other value will default to write with response. Note, no callback will occur on write without response.
 ```javascript
 //Note, this example doesn't actually work since it's read only characteristic
-{"value":"","serviceUuid":"180F","characteristicUuid":"2A19"}
+{"value":"","serviceUuid":"180F","characteristicUuid":"2A19","type":"noResponse"}
 ```
 
 ##### Success Return #####
@@ -902,11 +930,11 @@ function characteristicsHeartSuccess(obj)
 {
   if (obj.status == "discoveredCharacteristics")
   {
-    var characteristicUuids = obj.characteristicUuids;
-    for (var i = 0; i < characteristicUuids.length; i++)
+    var characteristics = obj.characteristics;
+    for (var i = 0; i < characteristics.length; i++)
     {
       console.log("Heart characteristics found, now discovering descriptor");
-      var characteristicUuid = characteristicUuids[i];
+      var characteristicUuid = characteristics[i].characteristicUuid;
       
       if (characteristicUuid == heartRateMeasurementCharacteristicUuid)
       {
@@ -987,10 +1015,10 @@ function characteristicsBatterySuccess(obj)
 {
   if (obj.status == "discoveredCharacteristics")
   {
-    var characteristicUuids = obj.characteristicUuids;
-    for (var i = 0; i < characteristicUuids.length; i++)
+    var characteristics = obj.characteristics;
+    for (var i = 0; i < characteristics.length; i++)
     {
-      var characteristicUuid = characteristicUuids[i];
+      var characteristicUuid = characteristics[i].characteristicUuid;
       
       if (characteristicUuid == batteryLevelCharacteristicUuid)
       {
