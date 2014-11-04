@@ -22,7 +22,7 @@ function logStatus(status)
         var listeningElement = parentElement.querySelector('.listening');
 
         listeningElement.innerHTML+=status+'<br/>';*/
-    //console.log(status);
+    console.log(status);
 }
 
 function dump(obj) {
@@ -52,10 +52,12 @@ function loadPlugin(name){
 }
 
 function compressData(data) {
+    return data;
     return Base64.toBase64(RawDeflate.deflate(Base64.utob(data)));
 }
 
 function decompressData(data) {
+    return data;
     return  Base64.btou(RawDeflate.inflate(Base64.fromBase64(data)));
 }
 /**
